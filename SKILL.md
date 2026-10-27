@@ -1,7 +1,7 @@
 ---
 name: ynh-app-packaging
 description: Use when writing or debugging a YunoHost app package.
-version: 2.9.0
+version: 2.10.0
 author: Hermes Agent
 license: MIT
 metadata:
@@ -73,7 +73,7 @@ Indexed by symptom in references/platform-traps.md (router) — helpers/templati
 - references/ssowat-integration.md — header injection, permission splits, regex/tie traps, portal-login scripting, sanitized capture proxy, watcharr + opengym lua recipes.
 - references/auth-backend-integration.md — SSO/auth decision tree (LDAP/OIDC/SAML/trusted-header/local), per-stack research greps, canonical nextcloud/forgejo LDAP wiring, JIT provisioning, admin bootstrap rule.
 - references/app-recipes.md — anubis, remark42, gmaps, sveltia-cms-auth, secrets-516, BEAM, ClickHouse, forgejo_runner, plausible + i2pd reference builds.
-- references/repo-hygiene.md — NOTHING-leaks 3-layer audit, PII history scrub, logo/screenshot sourcing ladder, portal tile mechanics, conformance/banner sweeps (scripts/verify_conformance.py), tests.toml generator, branch pitfalls.
+- references/repo-hygiene.md — NOTHING-leaks 3-layer audit, PII history scrub, logo/screenshot sourcing ladder, portal tile mechanics, conformance/banner sweeps (scripts/verify_conformance.py), tests.toml generator, branch pitfalls, catalog submission + pre-transfer CI path (developer CI / local package_check).
 - references/native-runtime-and-sidecars.md — Docker-only upstreams packed natively.
 - references/postfix-integration.md — mail-stack conf_regen hooks + outbound SMTP wiring (§Outbound) with the mail-send gate recipe.
 - references/upstream-repo-staleness-triage.md — single-app staleness triage + fleet audit of all quartztester _ynh repos (procedure, manifest-parse gotchas, sourcing shapes).
