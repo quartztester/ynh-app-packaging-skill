@@ -1,0 +1,64 @@
+# SSOwat / SSO integration recipes (ynh-app-packaging)
+
+Moved verbatim from SKILL.md on 2026-10-26.
+
+## Lua-glue SSO mint verified building opengym_ynh (nginx content_by_lua signing the app's own session cookie, 2026-10-26)
+- lua `s:find(pattern, 1, true)` third arg = PLAIN mode: the pattern is a
+  literal substring, so "^Basic " with the caret NEVER matches (silent 401
+  on a fully-injected request). And `not x == y` parses as `(not x) == y`
+  (always false). Use `s:sub(1,n) == "..."` / `~=`, never find-with-plain.
+- Node's stock http server frames responses CHUNKED when no Content-Length
+  is set — a hand-rolled cosocket HTTP/1.1 client that only parses
+  Content-Length gets an EMPTY body with HTTP 200. Read the
+  Transfer-Encoding header and de-chunk (hex size line, exact read, skip
+  CRLF, loop to size 0).
+- ACLs do NOT survive an app that rewrites its own data files: opengym's
+  saveDb does tmp+rename at mode 0600, which recreates the file with the
+  ACL mask parked at --- (entry present but #effective:--- — getfacl shows
+  it; a bare read by the ACL user fails too). setfacl -m m::r-- must be
+  re-applied after EVERY write: a systemd .path unit (PathChanged= on each
+  watched file) triggering a oneshot repair unit. MUST set
+  StartLimitIntervalSec=0 + StartLimitBurst=0 on BOTH units — the default
+  5-in-10s burst limit fails the service unit AND cascades the .path unit
+  to failed, silently disarming the watchdog (symptom: route 503s 'secret
+  not readable' again hours later).
+- Test a watchdog trigger with a real replacement: cp-to-/tmp + rm + mv
+  back + chmod 600 (as the app user), then poll getfacl.
+- Config-panel apply re-renders templates from the ARCHIVED package tree
+  (/etc/yunohost/apps/<app>/conf), NOT the workspace clone: live-editing
+  the rendered /etc/<app>/ file works only until the next toggle flips and
+  the archived (old) template wins the re-render. Fix the template in the
+  repo AND `yunohost app upgrade -u <clone>` to sync the archive, then
+  toggle-test.
+- CLI on YN12: `yunohost user create <name> -d domain -F "Full Name" -p pw`
+  (-F takes the BARE full name, not firstname=/fullname= pairs) and
+  `yunohost user delete <name>` (no 'remove' subcommand).
+- openGym specifics: PASSWORD_LOGIN gates /api/register/password (404 when
+  off — enabling SSO must also write PASSWORD_LOGIN=1 into the app env file
+  + restart); admin bootstrap = first registered user (FIRST_USER_ADMIN);
+  API delete refuses self-delete and last-admin delete (cleanup of a test
+  owner needs stop-service + db.json edit + start); missing db.json = zero
+  accounts, not an error; pre-existing profiles are adopted by exact name
+  match into the /etc/<app>/sso map on first walk-in.
+
+## SSOwat SSO integration for apps without LDAP/OIDC
+- SSOwat injects `YNH_USER`, `YNH_USER_EMAIL`, `YNH_USER_FULLNAME` headers on **protected** permission URIs after portal-cookie JWT verification (see /usr/share/ssowat/access.lua); client-forged copies are stripped. Loopback-test the app with plain curl + those headers. For full-browser testing of an SSO-gated webui (JS-heavy GUIs: dirty tracking, fetch flows), run a throwaway stdlib http.server reverse proxy on a scratch port that forwards to the webui port and injects the Ynh-User header — exactly what the nginx fragment does post-auth — then point the browser tool at 127.0.0.1:<port>. No SSO creds needed, no production config touched; kill the proxy after the session.
+- Pattern (used in plausible_ynh): manifest permission split — `main` stays public for the app's anonymous surface (trackers/static/APIs), an extra protected permission with regex `re:^__DOMAIN__\/(?!js\/|css\/|...).*$` gates the dashboard. App-side plug reads the identity header, looks up/creates the user, mints the app's own session. Pre-provision the admin account in install/upgrade via a release eval task (idempotent).
+- GOTCHA: nginx/Plug do NOT normalize underscores to dashes in header names — `YNH_USER_EMAIL` arrives as req header `"ynh_user_email"`, NOT `"ynh-user-email"`. Symptom: plug silently falls to else, no Set-Cookie. Test with `curl -D -` and look for the app's Set-Cookie.
+- LiveView apps: make `/live/` websocket path public too (self-authorizing via session token), plus `/css/ /images/ /favicon.ico /robots.txt` and the full `/api/` tree if API keys auth themselves.
+- CRITICAL regex-perm trap: ssowat picks the permission whose URI rule yields the LONGEST match against `host+uri` (access.lua `rex.match`). A `re:` URL containing CAPTURE groups returns only the capture as the match — much shorter than the public `main` `/` prefix — so the protected regex silently loses every request to the public perm. Write protected regexes with NON-CAPTURING groups only: `re:^__DOMAIN__\/(?:server(?:\/.*)?|auth(?:\/.*)?)$`.
+- TIE trap (anonaddy_ynh, verified 2026-10-11): a protected regex matching `/` (or a `/`-prefix perm) returns `host+/` — the SAME length as the concrete-domain `main` prefix — and Lua `pairs()` iteration order breaks the tie arbitrarily, so header injection on `/` is non-deterministic (symptom: walk-in works on `/login` but `/` bounces between auth-redirect and login). Deterministic layout: the protected perm owns the CONCRETE domain (`url = "/"`, show_tile=true, auth_header=true), and the public `main` perm becomes a regex over only the genuinely-public subpaths (`re:/(?:build\/|static\/|api\/...).*`), show_tile=false. No overlap → no tie.
+- nginx @app fastcgi trap (anonaddy_ynh): a `location @app { rewrite ... /index.php?$1 last; }` fallback re-enters location matching and the SSOwat access phase then sees uri `/index.php` — if `index.php` (or any excluded path) is NOT matched by the protected perm, headers are never injected for ANY Laravel/generic-PHP route, and proxy-auth apps redirect-loop between `/` and `/login`. Fix: serve routes from the fallback via DIRECT `fastcgi_pass` + `fastcgi_param SCRIPT_FILENAME .../public/index.php` (no rewrite), so ssowat matches the ORIGINAL uri on every request. Static file probes (`/x.php`) still get headers via the nested php location — test the ROUTE path, not a physical file, when debugging header injection.
+- A regex permission URL is rendered once at install with `__DOMAIN__` substituted; `change_url` does NOT rewrite it — re-pin it in scripts/change_url with `ynh_permission_url --permission=<name> --url="re:^${new_domain}\/...$"`.
+- If the app has its own master-key login page, leaving `/` itself public is safe when the login SUBMIT endpoint sits under the protected regex — the form renders but is inert to non-permissioned visitors (cap pattern: no app-side SSO plug needed).
+
+## Watcharr-style SSO: upstream trusted-header auth (verified 2026-10-14, watcharr_ynh)
+- KILLER TRAP (found post-'done', login loop / <-> /login?again=1): ssowat's auth_header mode REWRITES the client's Authorization header to `Basic user:-` on EVERY request the permission matches. Any app that authenticates its API with a Bearer JWT (SPA + localStorage token) gets its token clobbered: login mints, next call 401s ('token is malformed: invalid number of segments' in app logs), SPA bounces to its login page, SSO auto-login re-mints — infinite loop. NEVER set auth_header=true on a permission covering Bearer API routes.
+- Fix pattern (watcharr_ynh commit 07cdb4c): permission split. `main` (whole domain) auth_header=false — the app's own auth rules; anonymous users still reach the portal via ssowat's ACCESS check (that works without headers). A second permission `sso` pinned to the EXACT mint URI (e.g. __DOMAIN__/api/auth/proxy) with auth_header=true — ssowat longest-URI-match puts it above main's prefix, so YNH_USER injection happens only where the app consumes it. Add a matching exact-match nginx `location = /api/auth/proxy` block (any proxy_set_header set is fine; the location exists so conf reviewers see the route). Verify: python3 -c "import json; print(json.load(open('/etc/ssowat/conf.json'))['permissions'])" — the split must show main auth_header:False + sso on the one URI.
+- Apps with their own 'trusted header/proxy auth' (Watcharr HEADER_AUTH: headerName/autoLogin/logoutUrl) are the cleanest SSO walk-in: NO nginx re-header glue needed — pre-render the app config so headerName=YNH_USER + autoLogin BEFORE first boot. (Any truthy auth_header on YNH 12 renders as 'basic-with-password' in /etc/ssowat/conf.json — that string IS the standard header-injection mode, not a misconfig.)
+- First-user bootstrap: upstream grants admin (PERM_ADMIN) only via the password setup wizard (/setup/create_admin, only while zero users exist). Package-side seeding: let the app boot once (creates sqlite schema), then INSERT the admin row directly: `users(username=$admin, password='', type=<PROXY_USER const>, permissions=<PERM_ADMIN bit>)` — read the consts from entity sources (watcharr: type=3, PERM_NONE=1<<0=1, PERM_ADMIN=1<<1=2, GormModel has created_at/updated_at/deleted_at). Then RESTART the service: the 'in setup' flag is computed at boot (routes vanish only after restart), and the admin row stops the setup wizard from ever rendering.
+- ynh_setup_source extracts as ROOT: `chown -R app:app "$install_dir/src"` before any ynh_exec_as_app build step, or go/npm cache mkdirs fail 'permission denied' and the install rolls back.
+- Build-from-source packages: keep go/npm caches INSIDE the src/ tree (GOCACHE=$install_dir/src/.gocache, HOME=$install_dir/src) so `ynh_safe_rm src/` after the build keeps backups lean; systemd unit needs Environment=PATH=__PATH_WITH_NODEJS__ (nodejs resource var) when the app shells out to `node` (watcharr spawns ui/index.js on 127.0.0.1:3000).
+- GitHub Actions for ynh packages: the YunoHost/apps org has NO composite actions — the canonical linter workflow is clone YunoHost/package_linter + pip install + run (see YunoHost-Apps/grafana_ynh .github/workflows/package_linter.yml). Expect linter exit 1 on 'not in catalog' for any pre-submission repo; other quartztester repos ship no CI workflows for exactly that reason.
+- Basic-auth API clients (CalDAV/CardDAV/WebDAV/webmail — clients send their OWN `Authorization: Basic`): ssowat strips client-supplied Basic headers as spoofing by default. Official opt-out (Nextcloud/SOGo pattern): `ynh_app_setting_set --key=protect_against_basic_auth_spoofing --value=false`, then `yunohost app ssowatconf` + `systemctl reload nginx`. The app must still validate credentials itself.
+- Injected headers on protected routes: YNH_USER, YNH_USER_EMAIL, YNH_USER_FULLNAME (nginx passes as Ynh-User etc.); client-sent copies are stripped — only trust the injected ones.

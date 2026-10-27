@@ -1,0 +1,83 @@
+---
+name: ynh-app-packaging
+description: Use when writing or debugging a YunoHost app package.
+version: 2.8.0
+author: Hermes Agent
+license: MIT
+metadata:
+  hermes:
+    tags: [yunohost, packaging, debian, sysadmin]
+    related_skills: [yunohost-server-admin]
+---
+
+# YunoHost app packaging (YunoHost 12, helpers v2.1)
+
+Lean rule set. Gate mechanics, trap detail and per-app recipes live in references/ (indexed at the bottom) — load the one that matches the task, not all of them.
+
+## Required companion skills — activate BEFORE writing any package code
+Caveman + ponytail MUST be active for the whole packaging session — they are what stops an unfamiliar model from writing verbose scripts, speculative settings, and comment walls (Golden rule 7 is enforced through them). If either is missing from the environment, download it first (raw files verified live 2026-10):
+- ponytail — lazy-senior-dev mode, smallest change that fully solves the task: `https://raw.githubusercontent.com/DietrichGebert/ponytail/main/skills/ponytail/SKILL.md` (repo https://github.com/DietrichGebert/ponytail)
+- caveman — terse-output mode, all technical substance kept: `https://raw.githubusercontent.com/JuliusBrussee/caveman/main/skills/caveman/SKILL.md` (repo https://github.com/JuliusBrussee/caveman)
+
+Install = fetch the raw SKILL.md into the agent's skills dir (procedure: skill `fetching-external-skills`), then load it with skill_view. Only if the environment truly cannot fetch skills, proceed anyway but hold every script/config/doc to the lean bar manually: no speculative code, no comment walls, smallest diff that works — verbosity is a defect, not a style choice.
+
+## When to Use
+- Writing or debugging a YunoHost app package (manifest.toml, scripts/, conf/); diagnosing install/upgrade/backup/restore/config-panel failures on YunoHost 11+/12.
+- "Install <app> from GitHub" → check for an EXISTING quartztester/<app>_ynh repo FIRST (`api.github.com/users/quartztester/repos` filtered on `_ynh`); never stand up an upstream Docker route while his `_ynh` exists.
+- "Would X be easy to package?" → feasibility probe (references/quality-gates.md): answer from cheap evidence, install nothing.
+- Subdomain-vs-subpath decisions; binding app config to env files.
+- "Make the app log YunoHost users in like forgejo/nextcloud" → research the app's auth backends FIRST (LDAP/OIDC/SAML/trusted-header/local), then wire per references/auth-backend-integration.md — before writing any script.
+- "Audit my packages / does anything need updating?" → fleet audit of all quartztester _ynh repos vs upstream + the box, read-only (references/upstream-repo-staleness-triage.md).
+
+## Golden rules
+1. NATIVE PACKAGING ONLY — no Docker, ever (user policy).
+2. BOOTSTRAP FROM example_ynh, always: `mkdir -p /root/workspace/<app>_ynh && tar xzf <skill_dir>/templates/example_ynh-snapshot.tar.gz -C /root/workspace/<app>_ynh`, then edit in place — never hand-write manifest/scripts or copy an old package's layout. Refresh the snapshot from upstream if older than a few weeks; re-fetch https://doc.yunohost.org/en/dev/packaging instead of recalling (all pages indexed + doc-only facts: references/official-docs.md); diff half-done packages against the snapshot and adopt missing template files.
+3. PIN `helpers_version = "2.1"` in [integration] — without it a packaging_format=2 app silently loads dead 2.0 helpers. `scripts/verify_conformance.py` fails on any `ynh_*` call not defined in the local helpers.v2.1.d (hallucinated helpers are a static lint failure now; renames: references/traps-helpers-and-panels.md).
+4. SSO BY DEFAULT for any app with its own login — and pick the auth integration path (LDAP/OIDC/SAML/trusted-header/local) by RESEARCHING the app first, per references/auth-backend-integration.md. NEVER `auth_header=true` on a permission covering Bearer-token API routes (infinite login loop) — `auth_header` DEFAULTS to true in [resources.permissions], so Bearer-covered routes need it explicitly false. Patterns and traps: references/ssowat-integration.md.
+5. NO LIVE-ONLY FIXES — `ynh_setup_source` re-extracts on every pass (only `--keep` files survive) and `ynh_config_add` always overwrites managed config, so a box-side fix is UNPROVISIONED until it's in the repo AND landed via `yunohost app upgrade <app> -u <clone>`. Doctrine: references/traps-lifecycle.md.
+6. SECRETS live in app settings as the single source of truth; scripts re-render env/config from settings. NEVER regenerate a secret in upgrade/restore — create-once pattern: `ynh_app_setting_set_default --key=x --value=$(ynh_string_random)` (no-op + exports the var when already set).
+7. REVIEWER BAR: example_ynh IS the architecture — same file set, same v2 idioms, lean scripts (shared logic in _common.sh, no speculative settings, no comment walls). Deviating AI-generated packages get REJECTED at catalog review. Catalog quality levels (0–8) are bot-assigned from CI; level ≤4 gets the app HIDDEN and its upgrades FROZEN for every installed instance — the Definition of done below is what holds level ≥7.
+8. PUBLISH as quartztester: PAT /root/.gh_token (600, credential.helper wired — never embed the PAT in a remote URL); author 91350035+quartztester@users.noreply.github.com; repo <upstream-name>_ynh (manifest id: no `__`, no `.` — live 12.1 also accepts `-` but stay [a-z0-9_] catalog-style; the repo-name mismatch is fine); tag v<version>-ynh<N>; source tarballs/apt keys as GitHub Release assets. Server-driven changes to published repos: verify on the box, commit, WAIT for explicit user approval before pushing.
+9. NOTHING LEAKS (ABSOLUTE): no names/emails/domains/usernames/IPs/subdomain inventories in any file, image, or commit history. 3-layer audit (tree grep, full-history grep, image vision-sweep) before EVERY push — procedure: references/repo-hygiene.md.
+10. CATALOG-READY EXTRAS ARE A HARD GATE: logos/<appid>.png square RGBA ≥180px with corner alpha verified 0; REAL doc/screenshots/*.png embedded in README+README_fr; full example_ynh file set (fr docs, PRE_/POST_ docs, dotfiles — canonical, never delete); upstream's real LICENSE text; script modes 755 lifecycle / 644 _common+change_url+config. DESCRIPTION/manifest text follows the catalog-presentation rules (no "self-hosted"/tech/fuzzy-adjective filler, multi-line feature lists, fr pairing): references/repo-hygiene.md. Sourcing ladder: references/repo-hygiene.md.
+11. MAIL VIA THE BOX'S POSTFIX whenever the app sends email (signup codes, invitations, notifications): default SMTP to `127.0.0.1:25`, plaintext, no auth — never an external SMTP provider; expose server/port/ssl/from in the config panel with that default. The From address must use a domain the server's outbound relay ACCEPTS (default `app@<install-domain>`; on relayhost boxes only the relay-verified domain works — subdomains of a verified domain are NOT verified). Env flags the app reads as "is this var set" (Ruby `.present?`, Go `os.Getenv != ""`) are TRUE for `"0"`/`"false"` — render them EMPTY for off, never `0`. Prove it with a REAL app-level send + mail.log relay handoff (`status=sent`) — recipe: references/postfix-integration.md §Outbound.
+
+## Definition of done — every check, in order, before calling a package done (full mechanics: references/quality-gates.md)
+0. SMOKE-TEST UPSTREAM first, outside YunoHost (scratch port, throwaway creds); exercise login + core API; delete scratch state after.
+1. INSTALL as a background job (`yunohost app install <dir> -a "k=v&k=v" --force`; `unset PYTHONPATH`; args match manifest keys exactly, `&`-joined). Autopsy failures with `--no-remove-on-failure`.
+2. FUNCTIONALITY GATE: real browser, real portal login, primary write path exercised end-to-end + renders on reload; watch ~15 s for login bounce loops; prove nginx serves built output. If the app sends mail, ALSO the mail-send gate (rule 11). Mechanics: references/quality-gates.md §0a-0b.
+3. CONFIG PANEL round-trip: get → set (`-a "k=v&k=v"`) → get, gated on the RENDERED FILE's content (CLI exit lies); settings-bound panels need a `ynh_app_config_apply` override that re-renders files.
+4. BACKUP → REMOVE → RESTORE, then RE-RUN the functionality gate on the restored app. Canary (DB row + panel change) created RIGHT BEFORE the backup, asserted after. After any repo fix: upgrade first (refreshes the archived scripts), THEN re-create the backup, THEN test restore.
+5. UPGRADE ×2: same-version `app upgrade -u <clone> -F` twice, then re-run the functionality gate — the second pass catches fresh-install-only scripts.
+6. REMOVE cleanly: no stale services/sudoers/nginx maps; half-registered apps need the placeholder-unit trick (references/traps-lifecycle.md).
+7. LINTER clean except 'not in catalog'. Known shapes: `cpe = "???"` placeholder fails the manifest schema — set a real `cpe:2.3:a:<vendor>:<product>`; 'could not be parsed' lines on multi-line `bash -c` strings are parser noise — live gates arbitrate.
+8. ASSETS + tests.toml: rule-10 set complete; test_upgrade_from entries from the repo's OWN history; `args.<key> = "ci-..."` for required-no-default install questions.
+9. PRIVACY SWEEP (rule 9) before every push.
+10. REPORT: what passed; what's gated on user approval (pushes); what does NOT survive reinstall documented in doc/ADMIN.md.
+
+## Upgrade-durability (what sticks) — 3-line summary
+- setup_source re-extracts on EVERY pass; config_add always overwrites; panel applies re-render from the ARCHIVED tree — repo fixes land only after `app upgrade -u <clone>`. settings.yml survives upgrades, wiped on remove.
+- Fix routing: small app-code fix → `patches/<source_id>/` (with the durability copy into /etc/yunohost/apps/$app/, see traps-lifecycle); big divergence → fork + pin in [resources.sources]; config → conf/ template; runtime files → one shared _common.sh deploy function on install+upgrade+restore.
+- `--keep` is the only sanctioned mutable set inside $install_dir; app-written data belongs in $data_dir. Full doctrine + restore/patch mechanics: references/traps-lifecycle.md.
+
+## Top traps
+Indexed by symptom in references/platform-traps.md (router) — helpers/templating/panels in traps-helpers-and-panels.md, durability/backup/restore in traps-lifecycle.md, build-stacks/app-code in traps-build-and-appcode.md, box-ops/driving-yunohost in traps-box-and-ops.md. Load the one that matches the failure, not all four.
+
+## References (skill_view name='ynh-app-packaging', file_path='references/…')
+- references/quality-gates.md — full When-to-Use/Standard-workflow text, functionality-gate + mail-send-gate mechanics, feasibility probe, admin-GUI standard, verbosity audit, reviewer bar.
+- references/platform-traps.md — ROUTER: symptom → topical traps file (below).
+- references/traps-helpers-and-panels.md — helper renames, templating, env quoting, config panels, systemd asymmetries, ynh_restore permissions.
+- references/traps-lifecycle.md — upgrade-durability doctrine, patches/, backups-run-archived-scripts, canary discipline, remove/half-registered cleanup.
+- references/traps-build-and-appcode.md — npm/bundler engine pins, patch generation, SPA auth endpoints, demo modes, login throttles, mail flags, Laravel, root-helper apps, deb wrapping.
+- references/traps-box-and-ops.md — driving yunohost ops (background jobs, PTY prompts, global lock), portal/SSO testing, this box's nginx/DNS quirks.
+- references/ssowat-integration.md — header injection, permission splits, regex/tie traps, portal-login scripting, sanitized capture proxy, watcharr + opengym lua recipes.
+- references/auth-backend-integration.md — SSO/auth decision tree (LDAP/OIDC/SAML/trusted-header/local), per-stack research greps, canonical nextcloud/forgejo LDAP wiring, JIT provisioning, admin bootstrap rule.
+- references/app-recipes.md — anubis, remark42, gmaps, sveltia-cms-auth, secrets-516, BEAM, ClickHouse, forgejo_runner, plausible + i2pd reference builds.
+- references/repo-hygiene.md — NOTHING-leaks 3-layer audit, PII history scrub, logo/screenshot sourcing ladder, portal tile mechanics, conformance/banner sweeps (scripts/verify_conformance.py), tests.toml generator, branch pitfalls.
+- references/native-runtime-and-sidecars.md — Docker-only upstreams packed natively.
+- references/postfix-integration.md — mail-stack conf_regen hooks + outbound SMTP wiring (§Outbound) with the mail-send gate recipe.
+- references/upstream-repo-staleness-triage.md — single-app staleness triage + fleet audit of all quartztester _ynh repos (procedure, manifest-parse gotchas, sourcing shapes).
+- references/official-docs.md — all official dev-doc pages indexed + doc-only facts: manifest keys, resources/helpers surface, LDAP table, hooks env vars, dev environments (Incus/LXC/VirtualBox), quality levels + CI mechanics, doc-vs-box contradiction register.
+- references/admin-ops-interface.md — admin-side behaviors a package must survive: backup/restore model (reinstall+reincorporate, core-only), path relocations/bind mounts, SFTP ACLs, permissions/portal, mail relay reality, cert/TLS customs, fail2ban, migrations, blast radius.
+- references/biglybt.md — feasibility probe worked example.
+- templates/example_ynh-snapshot.tar.gz — bootstrap skeleton; scripts/verify_conformance.py — repo conformance audit; scripts/verify_skill_integrity.py — skill self-check (reference resolution both ways + PII patterns as --pii args).
