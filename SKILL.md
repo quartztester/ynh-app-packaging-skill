@@ -1,7 +1,7 @@
 ---
 name: ynh-app-packaging
 description: Use when writing or debugging a YunoHost app package.
-version: 2.11.1
+version: 2.13.0
 author: Hermes Agent
 license: MIT
 metadata:
@@ -69,7 +69,7 @@ Indexed by symptom in references/platform-traps.md (router) — helpers/templati
 - references/platform-traps.md — ROUTER: symptom → topical traps file (below).
 - references/traps-helpers-and-panels.md — helper renames, templating, env quoting, config panels, systemd asymmetries, ynh_restore permissions.
 - references/traps-lifecycle.md — upgrade-durability doctrine, patches/, backups-run-archived-scripts, canary discipline, remove/half-registered cleanup.
-- references/traps-build-and-appcode.md — npm/bundler engine pins, patch generation, SPA auth endpoints, demo modes, login throttles, mail flags, Laravel, root-helper apps, deb wrapping.
+- references/traps-build-and-appcode.md — npm/bundler engine pins, python wheel pins + system-user npm/git, empty-dir init contracts, patch generation, SPA auth endpoints, demo modes, login throttles, mail flags, Laravel, root-helper apps, deb wrapping.
 - references/traps-box-and-ops.md — driving yunohost ops (background jobs, PTY prompts, global lock), portal/SSO testing, this box's nginx/DNS quirks.
 - references/ssowat-integration.md — header injection, permission splits, regex/tie traps, portal-login scripting, sanitized capture proxy, watcharr + opengym lua recipes.
 - references/auth-backend-integration.md — SSO/auth decision tree (LDAP/OIDC/SAML/trusted-header/local), per-stack research greps, canonical nextcloud/forgejo LDAP wiring, JIT provisioning, admin bootstrap rule.

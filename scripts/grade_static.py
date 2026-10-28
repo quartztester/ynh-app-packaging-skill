@@ -122,7 +122,11 @@ def grade(pkg):
     used, halluc = set(), set()
     for s in scripts:
         txt = open(os.path.join(sdir, s), encoding="utf-8", errors="ignore").read()
-        for call in re.findall(r"\b(ynh_[a-z0-9_]+)\b", txt):
+        # strip full-line comments: helper NAMES mentioned in prose comments
+        # (e.g. explaining behavior) are not calls and must not be flagged
+        code_lines = [l for l in txt.splitlines() if not l.lstrip().startswith("#")]
+        code = "\n".join(code_lines)
+        for call in re.findall(r"\b(ynh_[a-z0-9_]+)\b", code):
             used.add(call)
             if defined and call not in defined:
                 halluc.add(call)
@@ -172,7 +176,30 @@ def grade(pkg):
         try:
             import tomllib
             with open(cp, "rb") as f:
-                tomllib.load(f)
+                panel_doc = tomllib.load(f)
+            # vocabulary check: YNH pydantic closed enums the CLI hides
+            ALLOWED_TYPES = {"display_text","markdown","alert","button","string","text",
+                             "password","color","number","range","boolean","date","time",
+                             "email","path","url","file","select","tags","domain","app",
+                             "user","group"}
+            bad_types, bad_patterns = [], []
+            def walk_opts(node, path=""):
+                if not isinstance(node, dict):
+                    return
+                t = node.get("type")
+                if isinstance(t, str) and t not in ALLOWED_TYPES:
+                    bad_types.append(f"{path}: type={t}")
+                p = node.get("pattern")
+                if isinstance(p, str):
+                    bad_patterns.append(f"{path}: pattern must be a table (regexp/error)")
+                for k, v in node.items():
+                    if isinstance(v, dict) and k not in ("pattern",):
+                        walk_opts(v, f"{path}.{k}" if path else k)
+            walk_opts(panel_doc)
+            if bad_types:
+                panel = "vocab-error: " + "; ".join(bad_types[:3])
+            elif bad_patterns:
+                panel = "vocab-error: " + "; ".join(bad_patterns[:3])
         except Exception as e:
             panel = f"parse-error: {e}"
     else:
@@ -238,6 +265,21 @@ def grade(pkg):
     except Exception as e:
         sha_ev = f"error: {e}"
     checks.append(check("source-sha256-correct", sha_ok, sha_ev))
+
+    # 15b. wheel rename must stay PEP 427 (name-version-py3-none-any.whl) —
+    # the provisioner validates wheel filenames and dies exit-1 with an
+    # empty operation log otherwise (archivebox 2026-10-28)
+    try:
+        src = get(manifest, "resources.sources.main") or {}
+        if str(src.get("url", "")).endswith(".whl"):
+            ren = str(src.get("rename") or src.get("url", "").rsplit("/", 1)[-1])
+            # distribution-version(-build)?-python-abi-platform => >=5 dash parts
+            parts = ren[:-4].split("-") if ren.endswith(".whl") else []
+            wheel_ok = len(parts) >= 5 and all(p for p in parts)
+            wheel_ev = f"rename={ren}"
+            checks.append(check("wheel-rename-pep427", wheel_ok, wheel_ev))
+    except Exception as e:
+        pass  # non-wheel packages: check does not apply
 
     # 16. apt deps with php (v2: packages is a comma STRING — split before iterating)
     apt_raw = get(manifest, "resources.apt.packages") or []
