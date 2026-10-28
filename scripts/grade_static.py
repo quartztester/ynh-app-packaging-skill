@@ -19,7 +19,7 @@ NO_NET = "--no-network" in ARGS
 EXPECT_VER = (ARGS[ARGS.index("--expect-version") + 1]
                if "--expect-version" in ARGS else None)
 EXTRA_PII = [ARGS[i + 1] for i, a in enumerate(ARGS) if a == "--pii" and i + 1 < len(ARGS)]
-DEFAULT_PII = [r"\b10\.", r"\b192\.168\.", r"\b172\.(1[6-9]|2[0-9]|3[01])\."]
+DEFAULT_PII = [r"\b10\.\d+\.", r"\b192\.168\.\d+", r"\b172\.(1[6-9]|2[0-9]|3[01])\.\d+"]
 PII_PATTERNS = DEFAULT_PII + EXTRA_PII
 BANNED_FILLER = ["self-hosted", "selfhosted", "simple", "lightweight", "light-weight",
                  "easy to use", "easy-to-use", "beautiful", "modern", "powerful"]
