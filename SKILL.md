@@ -1,7 +1,7 @@
 ---
 name: ynh-app-packaging
 description: Use when writing or debugging a YunoHost app package.
-version: 2.11.0
+version: 2.11.1
 author: Hermes Agent
 license: MIT
 metadata:

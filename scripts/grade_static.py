@@ -198,7 +198,8 @@ def grade(pkg):
         if ".git" in root:
             continue
         for f in files:
-            if f.lower().endswith(".png") and re.search(r"logo|icon", f, re.I):
+            rel = os.path.relpath(os.path.join(root, f), pkg)
+            if rel.lower().endswith(".png") and re.search(r"logo|icon", rel, re.I):
                 logos.append(os.path.join(root, f))
     logo_ok = False
     logo_ev = f"logo candidates={len(logos)}"
