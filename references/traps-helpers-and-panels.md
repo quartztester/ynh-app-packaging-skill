@@ -8,7 +8,7 @@ Carved from platform-traps.md 2026-10-27 (router there). Script-writing bugs: he
 - `yunohost service add` has NO `--log_type` on YNH 12.
 - Ground truth check: `YNH_HELPERS_VERSION=2.1 bash -c 'source /usr/share/yunohost/helpers; declare -F'` and `grep -n "^ynh_.*(" /usr/share/yunohost/helpers.v2.1.d/<topic>`.
 - Asymmetric systemd helper signatures: `ynh_config_add_systemd` takes `--service=`/`--template=` flags, but `ynh_config_remove_systemd` takes POSITIONAL service names — `--service=` dies with "unsupported operand".
-- `ynh_backup`/`ynh_restore` in helpers v2.1 take POSITIONAL paths, not `--src_path=`.
+- `ynh_backup`/`ynh_restore` in helpers v2.1 take POSITIONAL paths, not `--src_path=`. v2.0-shaped calls (`ynh_backup --src_path="$install_dir"`) parse cleanly and even pass a helper-NAME audit — they die only at backup time with `File or folder '--src_path=…' to be backed up does not exist` (gitea iteration-6, 2026-10-28). Pre-delivery self-check is MANDATORY: `grep -rnE 'ynh_(backup|restore) .*--' scripts/` must return nothing.
 - Hallucinated helpers are caught statically: verify_conformance.py diffs every `ynh_*` call in scripts/ against the local helpers.v2.1.d definitions (a live install died on a plausible-sounding `ynh_app_log` that never existed — that failure mode is now a lint failure, run it before every push).
 - `systemctl daemon-reload` bare — `ynh_systemctl --action=daemon_reload` is the v2.1 form.
 - `ynh_config_add_fail2ban` with `--logpath` / `--failregex` GENERATES the jail+filter conf itself (live docs, verified 2026-10-27) — prefer flags over shipping conf/f2b_*.conf templates; either way validate the regex with `fail2ban-regex` and remember app jails must land in /etc/fail2ban/jail.d/ (jail.conf is overwritten on fail2ban package updates).
@@ -17,6 +17,20 @@ Carved from platform-traps.md 2026-10-27 (router there). Script-writing bugs: he
 - Simple templating is case-sensitive (tags UPPERCASE, var names lowercase) and `__PATH__/` collapses to `/` when $path is / — templates using `__PATH__/sub` work at both root and subpath installs.
 - PHP version var is `$php_version` (underscore) — the example_ynh manifest's apt comment says "$phpversion", which is WRONG/legacy: helpers.v2.1.d/php dies with "$php_version should be defined" and helpers.v2.1.d/setting auto-converts a legacy `phpversion` setting to `php_version` (for consistency with nodejs_version etc.). Always use `$php_version` in scripts (backup/restore pool paths, `ynh_systemctl --service="php$php_version-fpm"`); the apt resource exporting phpX.Y-* packages sets it.
 - Never pin a phpX.Y version from memory of "the distro default" — distro PHP moves (bookworm launched with 8.2, sury/updates carry 8.4/8.5, trixie differs again). Query the target box/distro first (`apt-cache policy 'php*-fpm' | grep -A1 php`) and declare apt packages for the PHP you actually verified, or let `$php_version` flow from the helpers. Benchmark evidence: both a with-skill and a baseline run pinned php8.2-fpm blind and only escaped failure because the box happened to carry sury multi-PHP.
+
+## SSOwat basic-auth stripping (client-auth apps: git forges, DAV, APIs)
+- **SSOwat's anti-spoofing layer silently strips client `Authorization: Basic` headers** on any URI matched by an app permission (access.lua §5 "CLEAR USER-PROVIDED AUTH HEADER"), unless the app opts out. Apps whose clients authenticate with their own HTTP basic auth — git-over-HTTP (gitea/forgejo/gitlab), CalDAV/WebDAV, REST APIs used by curl/CI — MUST set in install AND upgrade AND restore:
+  ```bash
+  ynh_app_setting_set --key=protect_against_basic_auth_spoofing --value=false
+  ```
+  Without it: web-form login works, but every `curl -u`/git clone/push/API call 401s (gitea iteration-6: both fresh arms broken; symptom is a 0.6ms `401 @ v1/api.go reqToken` in the app log and zero LDAP traffic). Official gitea_ynh/forgejo_ynh set this on install line 6.
+- **The setting alone is NOT effective on a fresh install**: resources (permissions → portal/ssowat conf regen) are provisioned BEFORE scripts run, and YunoHost does NOT regenerate the portal conf after scripts. The setting lands in settings.yml but /etc/ssowat/conf.json stays stale (flag absent) until some LATER permission change on the box happens to regen it. Force it in the same script, right after the setting:
+  ```bash
+  yunohost tools shell -c "from yunohost.permission import user_permission_update; user_permission_update('$app.main', force=True)"
+  ```
+  (no-op update; user_permission_update always ends with app_ssowatconf()). Do NOT use helpers' `ynh_permission_update --protected=`/`--show_tile=` — the v2.1 helper accepts only `--permission/--add/--remove` and dies with `Invalid argument: --protected=false` (gitea iteration-6). Verify post-install: `python3 -c "import json; print(json.load(open('/etc/ssowat/conf.json'))['permissions']['$app.main'].get('protect_against_basic_auth_spoofing'))"` must print False.
+- **Round-trip the opt-out through restore**: settings.yml is backed up, so the flag survives, but the restore-time permission regen may again race ahead of the restored settings — re-assert setting + regen-forcing call in scripts/restore too.
+
 
 ## Templating and env rendering
 - `_ynh_replace_vars` substitutes ONLY uppercase `__FOO__` from the shell var `$foo` and `ynh_die`s if unset — lowercase tags pass through silently; every template placeholder needs a matching variable set in EVERY script that renders that template (install, upgrade, restore, config apply), including derived ones like `redis_port="$port_redis"` when the template says `__REDIS_PORT__`.

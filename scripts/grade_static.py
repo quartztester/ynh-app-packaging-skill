@@ -99,11 +99,14 @@ def grade(pkg):
         checks.append(check("version-matches-expected-upstream", ver.startswith(EXPECT_VER),
                             f"version={ver!r} expected prefix {EXPECT_VER}"))
 
-    # 6. bash -n every script
+    # 6. bash -n every SHELL script (skip .sql/.py/.conf assets that live in scripts/)
     sdir = os.path.join(pkg, "scripts")
     scripts = sorted(os.listdir(sdir)) if os.path.isdir(sdir) else []
     bad = []
     for s in scripts:
+        root, ext = os.path.splitext(s)
+        if ext and ext != ".sh":
+            continue  # non-shell asset (sql fixtures, python helpers) — not bash syntax
         r = sh(["bash", "-n", os.path.join(sdir, s)])
         if r.returncode != 0:
             bad.append(f"{s}: {r.stderr.strip()[:120]}")
@@ -253,11 +256,19 @@ def grade(pkg):
                 shots.append(os.path.relpath(os.path.join(root, f), pkg))
     checks.append(check("screenshots-present", bool(shots), f"{shots}", informational=True))
 
-    # 15. source sha256 verified by download
+    # 15. source sha256 verified by download (flat url or arch-mapped sources)
     sha_ok, sha_ev = False, "no source"
     try:
         src = get(manifest, "resources.sources.main") or {}
-        url, declared = src.get("url"), str(src.get("sha256", ""))
+        # arch-mapped: sources.main.amd64.url/.sha256 (gitea-style binary releases)
+        entry = src
+        if not src.get("url"):
+            for arch in ("amd64", "arm64", "armhf", "i386", "x86_64"):
+                cand = src.get(arch) or {}
+                if isinstance(cand, dict) and cand.get("url") and cand.get("sha256"):
+                    entry = cand
+                    break
+        url, declared = entry.get("url"), str(entry.get("sha256", ""))
         if url and declared:
             if NO_NET:
                 sha_ok, sha_ev = None, "skipped (no-network)"
@@ -266,7 +277,7 @@ def grade(pkg):
                     urllib.request.urlretrieve(url, tf.name)
                     actual = hashlib.sha256(open(tf.name, "rb").read()).hexdigest()
                 sha_ok = actual == declared
-                sha_ev = f"declared={declared[:12]} actual={actual[:12]}"
+                sha_ev = f"declared={declared[:12]} actual={actual[:12]} (arch-mapped)" if entry is not src else f"declared={declared[:12]} actual={actual[:12]}"
     except Exception as e:
         sha_ev = f"error: {e}"
     checks.append(check("source-sha256-correct", sha_ok, sha_ev))
@@ -293,7 +304,18 @@ def grade(pkg):
     else:
         apt = list(apt_raw)
     php = any("php" in str(p) for p in apt)
-    checks.append(check("apt-deps-with-php", bool(apt) and php, f"apt={apt}"))
+    # class-aware: php apps need php in apt; non-php apps must NOT declare the DB
+    # server in apt when a database resource provisions it (official gitea_ynh
+    # ships mariadb-server in apt alongside the mysql resource — redundant)
+    db_res = get(manifest, "resources.database")
+    db_server_in_apt = any(re.fullmatch(r"(postgresql|mariadb-server|mysql-server|postgresql-\d+)", str(p)) for p in apt)
+    if php:
+        apt_ok, apt_ev = bool(apt), f"php app; apt={apt}"
+    elif db_res and db_server_in_apt:
+        apt_ok, apt_ev = False, f"database resource declared but apt pins the server: {apt}"
+    else:
+        apt_ok, apt_ev = True, f"non-php class; apt={apt}"
+    checks.append(check("apt-deps-appropriate", apt_ok, apt_ev))
 
     # 17. PII scan (generic defaults; operator patterns via --pii)
     pii_hits = []
@@ -331,8 +353,19 @@ def grade(pkg):
                     ng += open(os.path.join(root, f), encoding="utf-8", errors="ignore").read()
                 except Exception:
                     pass
-    checks.append(check("nginx-conf-references-php", bool(re.search(r"fastcgi|php", ng, re.I)),
-                        f"nginx conf found={bool(ng)}; php ref={bool(re.search('fastcgi|php', ng, re.I))}"))
+    # class-aware wiring: php apps fastcgi; proxy/daemon apps (go/node/python
+    # sockets) need proxy_pass — the landing-style php regex 404s an entire
+    # class of correct packages
+    has_fastcgi = bool(re.search(r"fastcgi", ng, re.I))
+    has_proxy = bool(re.search(r"proxy_pass", ng))
+    if has_fastcgi or re.search(r"php", ng, re.I):
+        wired = has_fastcgi or has_proxy
+        ev = f"php-style; fastcgi={has_fastcgi} proxy={has_proxy}"
+    else:
+        wired = has_proxy
+        ev = f"proxy-style; proxy_pass={has_proxy}"
+    checks.append(check("nginx-conf-wires-app", bool(ng) and wired,
+                        f"nginx conf found={bool(ng)}; {ev}"))
 
     return checks, manifest
 
