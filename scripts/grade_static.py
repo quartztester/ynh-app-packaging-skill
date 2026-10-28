@@ -329,15 +329,22 @@ def grade(pkg):
     else:
         apt = list(apt_raw)
     php = any("php" in str(p) for p in apt)
-    # class-aware: php apps need php in apt; non-php apps must NOT declare the DB
-    # server in apt when a database resource provisions it (official gitea_ynh
-    # ships mariadb-server in apt alongside the mysql resource — redundant)
+    # class-aware + core-verified (YNH 12.1 utils/resources.py): the database
+    # resource provisions db/user ONLY — it never installs the DB server.
+    # mariadb-server is a yunohost core dependency (every box has it; apt pin
+    # redundant-but-tolerated), but postgresql is NOT — a postgres app that
+    # doesn't apt-pin the server dies at provision on a stock box (works only
+    # where another app already installed PG; gitea iteration-6 slipped through
+    # exactly that way on a PG-carrying box).
     db_res = get(manifest, "resources.database")
-    db_server_in_apt = any(re.fullmatch(r"(postgresql|mariadb-server|mysql-server|postgresql-\d+)", str(p)) for p in apt)
+    db_type = str(get(db_res, "type") or "") if db_res else ""
+    pg_in_apt = any(re.fullmatch(r"postgresql(-\d+)?", str(p)) for p in apt)
     if php:
         apt_ok, apt_ev = bool(apt), f"php app; apt={apt}"
-    elif db_res and db_server_in_apt:
-        apt_ok, apt_ev = False, f"database resource declared but apt pins the server: {apt}"
+    elif db_res and "postgresql" in db_type:
+        apt_ok = pg_in_apt
+        apt_ev = (f"postgres app; server apt-pinned={pg_in_apt}" if pg_in_apt
+                  else f"postgres db resource but server NOT in apt ({apt}) — resource provisions db/user only; install dies on a PG-less box")
     else:
         apt_ok, apt_ev = True, f"non-php class; apt={apt}"
     checks.append(check("apt-deps-appropriate", apt_ok, apt_ev))
