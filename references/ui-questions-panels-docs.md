@@ -1,0 +1,26 @@
+# Install questions, config panels, admin docs — the YNH-rendered GUIs (UX doctrine)
+
+Both GUIs the webadmin shows are DECLARATIVE, rendered by YunoHost core from the package: `manifest.toml [install.*]` → the install form; `config_panel.toml` → the postinstall panel. Nothing "transfers to YunoHost" — scripts just receive answers as env vars. Mechanics/traps: traps-helpers-and-panels.md (panels), ssowat-integration.md (permissions). This file is the WHAT-to-expose + wording doctrine, calibrated 2026-10-28 against 9 catalog level-8 apps (nextcloud, roundcube, jellyfin, syncthing, searxng, rustdesk-server, stirling-pdf, forgejo, joplin — stats preserved in the packaging workspace `ui-research/`).
+
+## Install questions — ask almost nothing
+- STANDARD TYPES CARRY THEIR OWN GUI TEXT: `domain`/`path`/`user`/`group` questions render core-provided labels + help. Level-8 apps ship them ask-less (9/9 domains, 8/9 init_main_permission have EMPTY ask). Write `ask`/`help` ONLY for app-specific semantics a stock label can't express (corpus precedents: nextcloud `user_home`, forgejo `init_admin_permission`).
+- Budget: corpus median is 4 questions, max 5; rustdesk-server ships ONE (`[install.domain]` alone) and is level 8. A question is justified only when a non-technical admin must choose it at install AND it can't be a safe panel toggle later (permission shape, feature bootstrap).
+- Core set, in order: `domain` → `path` (only if the app truly works under a subpath) → `init_main_permission` (group; default = the app's real visibility) → `admin`/`init_admin_permission` ONLY when the app has its own auth AND SSO is impossible (auth-backend-integration.md; password questions = documented local last resort only) → `language` only if upstream ships real translations (select, curated choices).
+- Visibility is a PERMISSION, not a boolean: fold "is this public?" into `init_main_permission`'s default (visitors vs admins); extra booleans only for app-internal behavior beyond URI gating (nextcloud `user_home` precedent).
+- Custom questions: bilingual ask (en+fr), short question phrasing; help = the consequence of the answer; ALWAYS a default; select over free string when choices enumerate; never `optional=true` without a default.
+- NEVER ask: ports, DB names, internal paths, SMTP details (panel later), API keys (panel later), anything derivable (full URL from domain+path), anything with a safe default changeable later. ArchiveBox-style long forms are the legacy shape — the modern level-8 bar is fewer questions + more sane defaults + panel toggles.
+
+## Config panel — what a non-technical self-hoster actually flips
+- Sections by CONCERN with short names (forgejo: Registration / Repository / Email / Privacy / Federation), not by config-file layout. Both corpus poles are level 8: nextcloud 5 sections × 1 option; forgejo 12 × ~29. NEVER expose the app's whole config surface.
+- ask = plain question ("Disable registrations?"); help = consequence ("Disallow registration, only allow admins to create accounts."). The panel's help text IS that option's documentation — ADMIN.md must not repeat it.
+- Types: boolean + `yes = "true"` / `no = "false"`; number for counts; select for enums; tags for lists; `type = "button"` for ACTIONS (repair/regen — nextcloud permissions button); `visible` JS for dependent options; `bind = "settings"` unless the value lives elsewhere (getter env-poisoning trap: traps-helpers-and-panels.md).
+- EXCLUDE: numeric tuning walls (LibreTranslate's 15 rate-limit knobs = the anti-pattern — advanced limits live in the app's config file, pointed to once from ADMIN.md), internal paths/ports/DB credentials, anything the app's own admin UI already exposes BETTER (never mirror the app's full settings page).
+- Every panel value round-trips through settings + app state + service (gate: quality-gates.md §3) and survives upgrade unchanged (never rewrite user-chosen values — listmonk cycle proof).
+- Mail panel fields (server/port/ssl/from/user/pwd) + From-domain trap: postfix-integration.md §Outbound.
+
+## ADMIN.md / README — task pointers, not encyclopedias
+- README.md is BOT-GENERATED (readme_generator; the catalog bot rewrites it) — don't hand-maintain; its absence is the one tolerated linter warning.
+- ADMIN.md corpus reality: 6–78 lines (searxng 7, jellyfin 20, nextcloud 22, roundcube 38, forgejo 78). The model is searxng: install dir, where custom settings live (and why not to edit the defaults), one upgrade-behavior caveat. Headings are TASKS (forgejo: User synchronization / Notes on SSH usage / Private Mode / Uploaded files size), never system diagrams.
+- A line earns its place ONLY if it needs shell/app-side action a panel can't do. NO: panel-option restatement, packager internals (patch mechanics, DB provisioning, helper choices — those live in the repo where maintainers look), implementation notes an admin can't act on, facts stated twice.
+- Worked trim example: Loomio's ADMIN.md 68 → ~40 lines keeping services+log locations, mail verify commands, backup/restore timing; cutting patch/PG-extension internals, the duplicated no-LDAP note, and hand-edit warnings the panel makes moot.
+- DESCRIPTION.md = the catalog blurb, 1–2 user-facing sentences; catalog presentation rules: repo-hygiene.md.
