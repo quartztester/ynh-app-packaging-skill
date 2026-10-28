@@ -1,7 +1,7 @@
 ---
 name: ynh-app-packaging
 description: Use when writing or debugging a YunoHost app package.
-version: 2.17.0
+version: 2.18.0
 author: Hermes Agent
 license: MIT
 metadata:
@@ -47,11 +47,13 @@ Install = fetch the raw SKILL.md into the agent's skills dir (procedure: skill `
 0. SMOKE-TEST UPSTREAM first, outside YunoHost (scratch port, throwaway creds); exercise login + core API; delete scratch state after.
 1. INSTALL as a background job (`yunohost app install <dir> -a "k=v&k=v" --force`; `unset PYTHONPATH`; args match manifest keys exactly, `&`-joined). Autopsy failures with `--no-remove-on-failure`.
 2. FUNCTIONALITY GATE: real browser, real portal login, primary write path exercised end-to-end + renders on reload; watch ~15 s for login bounce loops; prove nginx serves built output. If the app sends mail, ALSO the mail-send gate (rule 11). Mechanics: references/quality-gates.md §0a-0b.
-3. CONFIG PANEL round-trip: get → set (`-a "k=v&k=v"`) → get, gated on the RENDERED FILE's content (CLI exit lies); settings-bound panels need a `ynh_app_config_apply` override that re-renders files.
+2b. ENDPOINT MATRIX (quality-gates.md §0c): from ssowat conf.json — every public permission URI anonymously NEVER 302s, every protected one DOES. Catches regex URIs and permission-wiring bugs all other gates miss.
+3. CONFIG PANEL round-trip: get → set (`-a "k=v&k=v"` with SHORT setting names) → get, gated on the RENDERED FILE's content (CLI exit lies); settings-bound panels need a `ynh_app_config_apply` override that re-renders files.
 4. BACKUP → REMOVE → RESTORE, then RE-RUN the functionality gate on the restored app. Canary (DB row + panel change) created RIGHT BEFORE the backup, asserted after. After any repo fix: upgrade first (refreshes the archived scripts), THEN re-create the backup, THEN test restore.
 5. UPGRADE ×2: same-version `app upgrade -u <clone> -F` twice, then re-run the functionality gate — the second pass catches fresh-install-only scripts.
+5b. CHANGE_URL MOVE (quality-gates.md §5 CHANGE_URL MOVE): relocate the live install once (new path, or second domain for full-domain apps), re-run 2b + functionality gate + canary read, move back. An unexecuted change_url is an untested script.
 6. REMOVE cleanly: no stale services/sudoers/nginx maps; half-registered apps need the placeholder-unit trick (references/traps-lifecycle.md).
-7. LINTER clean except 'not in catalog'. Known shapes: `cpe = "???"` placeholder fails the manifest schema — set a real `cpe:2.3:a:<vendor>:<product>`; 'could not be parsed' lines on multi-line `bash -c` strings are parser noise — live gates arbitrate.
+7. LINTER clean except 'not in catalog', output PASTED into the REPORT (evidence, not assertion). Known shapes: `cpe = "???"` placeholder fails the manifest schema — set a real `cpe:2.3:a:<vendor>:<product>`; 'could not be parsed' lines on multi-line `bash -c` strings are parser noise — live gates arbitrate.
 8. ASSETS + tests.toml: rule-10 set complete; test_upgrade_from entries from the repo's OWN history; `args.<key> = "ci-..."` for required-no-default install questions.
 9. PRIVACY SWEEP (rule 9) before every push.
 10. REPORT: what passed; what's gated on user approval (pushes); what does NOT survive reinstall documented in doc/ADMIN.md.
