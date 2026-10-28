@@ -21,6 +21,8 @@ Carved from platform-traps.md 2026-10-27 (router there). Compile-time toolchain 
 
 - NEVER ship a `Content-Security-Policy` header from nginx when the app embeds its own meta CSP — browsers intersect ALL active policies and the most restrictive wins (privatebin benchmark 2026-10-27: a baseline package copied an "upstream-recommended" header CSP with `connect-src 'none'` over the app's meta CSP `connect-src * blob:` → every fetch/XHR blocked → paste creation silently impossible while the page loaded fine and 31/31 static checks passed). If the app ships its own meta CSP, ship NO CSP header from the package. If you add one anyway, runtime-test the app's primary write path afterward — static checks and render simulations cannot see this failure class.
 
+- **Defense in depth for gated admin UIs (qbittorrent benchmark 2026-10-27)**: even when SSO/permission gates the WebUI and the app trusts localhost, SET the app's own admin password/hash at install. A baseline package left qBittorrent's WebUI at the default `admin`/`adminadmin` — and the daemon PRINTS "The Web UI administrator password has not been changed from the default" to the journal, readable by any local process. SSO gating is the outer wall, not the only one.
+
 ## Framework-level traps (PHP/Laravel/Eloquent, anonaddy dogfood 2026-10-11)
 - Upstream artisan commands with `unique:` validations (e.g. addy.io `set-username-externalid`) exit 1 on idempotent re-runs — check the current value first and skip if unchanged.
 - Eloquent morph columns (addy.io `aliases.aliasable_type`) need the FQCN (`App\\Models\\Username`); tinker inserts need `new Model()` + `forceFill()` + `save()` (MassAssignmentException on `create()`).
