@@ -1,7 +1,7 @@
 ---
 name: ynh-app-packaging
 description: Use when writing or debugging a YunoHost app package.
-version: 2.21.0
+version: 2.21.1
 author: Hermes Agent
 license: MIT
 metadata:
@@ -69,7 +69,7 @@ Indexed by symptom in references/platform-traps.md (router) — helpers/templati
 
 ## References (skill_view name='ynh-app-packaging', file_path='references/…')
 - references/quality-gates.md — full When-to-Use/Standard-workflow text, functionality-gate + mail-send-gate mechanics, feasibility probe, verbosity audit, reviewer bar.
-- references/ui-questions-panels-docs.md — install-question / config-panel / ADMIN.md UX doctrine (calibrated on 9 catalog level-8 apps): standard types need no ask, median 4 questions, panel sections by concern with ask=question/help=consequence, exclude tuning walls, ADMIN.md = 6–78 task-pointer lines.
+- references/ui-questions-panels-docs.md — install-question / config-panel / ADMIN.md UX doctrine (calibrated on 19 catalog level-8 apps, two rounds): standard types need no ask, median 4 questions, panel sections by concern with ask=question/help=consequence, exclude tuning walls, ADMIN.md = 1–86 task-pointer lines.
 - references/platform-traps.md — ROUTER: symptom → topical traps file (below).
 - references/traps-helpers-and-panels.md — helper renames, templating, env quoting, config panels, systemd asymmetries, ynh_restore permissions.
 - references/traps-lifecycle.md — upgrade-durability doctrine, patches/, backups-run-archived-scripts, canary discipline, remove/half-registered cleanup.
