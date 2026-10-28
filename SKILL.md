@@ -1,7 +1,7 @@
 ---
 name: ynh-app-packaging
 description: Use when writing or debugging a YunoHost app package.
-version: 2.19.0
+version: 2.19.1
 author: Hermes Agent
 license: MIT
 metadata:
@@ -31,6 +31,7 @@ Install = fetch the raw SKILL.md into the agent's skills dir (procedure: skill `
 - "Test/benchmark/measure this skill itself" (package an app with a fresh agent to score the skill) → references/benchmarking.md: with-skill vs baseline runs, calibrated static rubric (scripts/grade_static.py), parent-run live gates; judged on ecosystem usability, never line-parity with the official package.
 
 ## Golden rules
+0. ENVIRONMENT GUARD, before any packaging work: the box must be YunoHost 12.x with helpers 2.1 — `yunohost --version` major 12 AND `ls /usr/share/yunohost/helpers.v2.1.d/ >/dev/null`. On mismatch (YNH 13+, helpers ≠ 2.1): STOP — every trap below is validated against that core only; re-audit references/official-docs.md and re-run one covered app's gates before writing scripts here.
 1. NATIVE PACKAGING ONLY — no Docker, ever (user policy).
 2. BOOTSTRAP FROM example_ynh, always: `mkdir -p /root/workspace/<app>_ynh && tar xzf <skill_dir>/templates/example_ynh-snapshot.tar.gz -C /root/workspace/<app>_ynh`, then edit in place — never hand-write manifest/scripts or copy an old package's layout. Refresh the snapshot from upstream if older than a few weeks; re-fetch https://doc.yunohost.org/en/dev/packaging instead of recalling (all pages indexed + doc-only facts: references/official-docs.md); diff half-done packages against the snapshot and adopt missing template files.
 3. PIN `helpers_version = "2.1"` in [integration] — without it a packaging_format=2 app silently loads dead 2.0 helpers. `scripts/verify_conformance.py` fails on any `ynh_*` call not defined in the local helpers.v2.1.d (hallucinated helpers are a static lint failure now; renames: references/traps-helpers-and-panels.md).
@@ -90,4 +91,6 @@ Indexed by symptom in references/platform-traps.md (router) — helpers/templati
 This skill directory is itself a git repo (branch `main`), kept for public GitHub publishing. Rules:
 - After ANY edit to SKILL.md, references/, scripts/ or templates/ — COMMIT it: author `quartztester <91350035+quartztester@users.noreply.github.com>`, message naming the change; tag `v<version>` on version bumps. An uncommitted edit is lost history. Git history begins at v2.8.0; earlier versions were never tracked.
 - Research-driven content changes (doc audits, upstream orgs, issues) are RECOMMENDED to the user first and implemented only after approval — never rewrite the skill unilaterally from a research pass.
+- EFFORT PRIORITY (user rule): the skill exists to make PACKAGING correct; benchmarking is secondary attribution. Every live-gate failure on a with-skill package is a skill gap — fold it into a trap or gate rule before anything else. Run a baseline arm only when a NEW gate class needs attribution, not every cycle.
+- ANTI-STUFFING (user rule): one canonical home per trap family — other references point to it, never restate it. A new trap/gate enters only after a live gate failure proves it, or when it covers a script every package ships untested (e.g. change_url). verify_skill_integrity.py's per-reference line budget enforces this at commit time — a SIZE failure means split or compress the file, never raise the budget.
 - Everything rule 9 demands of app repos applies to THIS repo too: no personal identifiers, private domains, IPs, or box-specific paths in any file or commit — it is public-bound.
