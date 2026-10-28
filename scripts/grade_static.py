@@ -243,6 +243,11 @@ def grade(pkg):
     for root, _, files in os.walk(pkg):
         if ".git" in root:
             continue
+        # YNH convention: screenshots live in a doc/screenshots/ DIRECTORY with
+        # arbitrary filenames (homepage.png, profile.png) — match path, not just name
+        if "screenshot" in root.lower():
+            shots.extend(os.path.relpath(os.path.join(root, f), pkg) for f in files)
+            continue
         for f in files:
             if "screenshot" in f.lower():
                 shots.append(os.path.relpath(os.path.join(root, f), pkg))
