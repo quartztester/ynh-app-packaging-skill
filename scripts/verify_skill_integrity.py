@@ -50,6 +50,19 @@ def main():
     for name in sorted(on_disk - mentioned):
         problems.append(f"ORPHAN reference on disk but never mentioned: {name}")
 
+    # size budget (dedup policy 2026-10-28): keep per-reference load lean.
+    # Budget = current accepted max (app-recipes.md, one file per app class,
+    # grep-friendly) + small headroom; official-docs.md is exempt (doc index).
+    BUDGET = 130
+    counts = sorted(((sum(1 for _ in open(p, encoding="utf-8", errors="replace")),
+                      os.path.basename(p))
+                     for p in glob.glob(os.path.join(args.skill_dir, "references", "*.md"))),
+                    reverse=True)
+    print("reference sizes (lines): " + ", ".join(f"{n}:{c}" for c, n in counts))
+    for c, n in counts:
+        if c > BUDGET and n != "official-docs.md":
+            problems.append(f"SIZE {n}: {c} lines > {BUDGET} budget (split or compress)")
+
     if problems:
         print("\n".join(problems))
         sys.exit(1)
