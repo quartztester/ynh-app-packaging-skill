@@ -1,7 +1,7 @@
 ---
 name: ynh-app-packaging
 description: Use when writing or debugging a YunoHost app package.
-version: 2.21.1
+version: 2.21.2
 author: Hermes Agent
 license: MIT
 metadata:
@@ -28,7 +28,7 @@ Install = fetch the raw SKILL.md into the agent's skills dir (procedure: skill `
 - Subdomain-vs-subpath decisions; binding app config to env files.
 - "Make the app log YunoHost users in like forgejo/nextcloud" → research the app's auth backends FIRST (LDAP/OIDC/SAML/trusted-header/local), then wire per references/auth-backend-integration.md — before writing any script.
 - "Audit my packages / does anything need updating?" → fleet audit of all quartztester _ynh repos vs upstream + the box, read-only (references/upstream-repo-staleness-triage.md).
-- "Test/benchmark/measure this skill itself" (package an app with a fresh agent to score the skill) → references/benchmarking.md: with-skill vs baseline runs, calibrated static rubric (scripts/grade_static.py), parent-run live gates; judged on ecosystem usability, never line-parity with the official package.
+- "Test/benchmark/measure this skill itself" (package an app with a fresh agent to score the skill) → references/benchmarking.md: with-skill vs baseline runs, calibrated static rubric (scripts/grade_static.py), parent-run live gates; judged on ecosystem usability, never line-parity with the official package. "Research more level-8 apps / refine the UX doctrine" → corpus cross-check (benchmarking.md §Doctrine-corpus): verify pasted GUI evidence against the app's CURRENT tree, diverse app pool, tomllib stats, fold only contradictions.
 
 ## Golden rules
 0. ENVIRONMENT GUARD, before any packaging work: the box must be YunoHost 12.x with helpers 2.1 — `yunohost --version` major 12 AND `ls /usr/share/yunohost/helpers.v2.1.d/ >/dev/null`. On mismatch (YNH 13+, helpers ≠ 2.1): STOP — every trap below is validated against that core only; re-audit references/official-docs.md and re-run one covered app's gates before writing scripts here.
@@ -69,7 +69,7 @@ Indexed by symptom in references/platform-traps.md (router) — helpers/templati
 
 ## References (skill_view name='ynh-app-packaging', file_path='references/…')
 - references/quality-gates.md — full When-to-Use/Standard-workflow text, functionality-gate + mail-send-gate mechanics, feasibility probe, verbosity audit, reviewer bar.
-- references/ui-questions-panels-docs.md — install-question / config-panel / ADMIN.md UX doctrine (calibrated on 19 catalog level-8 apps, two rounds): standard types need no ask, median 4 questions, panel sections by concern with ask=question/help=consequence, exclude tuning walls, ADMIN.md = 1–86 task-pointer lines.
+- references/ui-questions-panels-docs.md — install-question / config-panel / ADMIN.md UX doctrine (calibrated on 49 catalog level-8 apps, three rounds): standard types need no ask, median 3–4.5 questions, panel sections by concern with ask=question/help=consequence, exclude tuning walls, ADMIN.md = 4–24 lines normally, risk-correlated tail to ~124 for infra-exposing options.
 - references/platform-traps.md — ROUTER: symptom → topical traps file (below).
 - references/traps-helpers-and-panels.md — helper renames, templating, env quoting, config panels, systemd asymmetries, ynh_restore permissions.
 - references/traps-lifecycle.md — upgrade-durability doctrine, patches/, backups-run-archived-scripts, canary discipline, remove/half-registered cleanup.
@@ -82,7 +82,7 @@ Indexed by symptom in references/platform-traps.md (router) — helpers/templati
 - references/native-runtime-and-sidecars.md — Docker-only upstreams packed natively.
 - references/postfix-integration.md — mail-stack conf_regen hooks + outbound SMTP wiring (§Outbound) with the mail-send gate recipe.
 - references/upstream-repo-staleness-triage.md — single-app staleness triage + fleet audit of all quartztester _ynh repos (procedure, manifest-parse gotchas, sourcing shapes).
-- references/benchmarking.md — benchmark THIS skill: fresh with-skill vs baseline packaging runs, rubric calibration against an official repo, live-gate sequencing, judging standard (ecosystem usability, not line-parity); rubric runner: scripts/grade_static.py.
+- references/benchmarking.md — benchmark THIS skill: fresh with-skill vs baseline packaging runs, rubric calibration against an official repo, live-gate sequencing, judging standard (ecosystem usability, not line-parity); rubric runner: scripts/grade_static.py; ALSO doctrine corpus cross-check — calibrate UX/doc claims against level-8 catalog apps (verify pasted GUIs against current trees).
 - references/official-docs.md — all official dev-doc pages indexed + doc-only facts: manifest keys, resources/helpers surface, LDAP table, hooks env vars, dev environments (Incus/LXC/VirtualBox), quality levels + CI mechanics, doc-vs-box contradiction register.
 - references/admin-ops-interface.md — admin-side behaviors a package must survive: backup/restore model (reinstall+reincorporate, core-only), path relocations/bind mounts, SFTP ACLs, permissions/portal, mail relay reality, cert/TLS customs, fail2ban, migrations, blast radius.
 - references/biglybt.md — feasibility probe worked example.
