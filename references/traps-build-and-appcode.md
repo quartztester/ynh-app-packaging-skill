@@ -19,6 +19,8 @@ Carved from platform-traps.md 2026-10-27 (router there). Compile-time toolchain 
 - Header-auth apps: pointing the app's logout URL at `/yunohost/sso/?action=logout` closes the loop end-to-end (verified in-browser: app logout → portal logout). SSOwAt also passes `Authorization: *** through on public permissions — a `url = "/api"` permission with `allowed = ["visitors"]`, `auth_header = false` gives token-authenticated REST access alongside portal-gated UI.
 - Subpath installs (`path=/foo`) break apps with hardcoded absolute redirects (Plausible: /register, /sites) — check the router before allowing non-root paths.
 
+- NEVER ship a `Content-Security-Policy` header from nginx when the app embeds its own meta CSP — browsers intersect ALL active policies and the most restrictive wins (privatebin benchmark 2026-10-27: a baseline package copied an "upstream-recommended" header CSP with `connect-src 'none'` over the app's meta CSP `connect-src * blob:` → every fetch/XHR blocked → paste creation silently impossible while the page loaded fine and 31/31 static checks passed). If the app ships its own meta CSP, ship NO CSP header from the package. If you add one anyway, runtime-test the app's primary write path afterward — static checks and render simulations cannot see this failure class.
+
 ## Framework-level traps (PHP/Laravel/Eloquent, anonaddy dogfood 2026-10-11)
 - Upstream artisan commands with `unique:` validations (e.g. addy.io `set-username-externalid`) exit 1 on idempotent re-runs — check the current value first and skip if unchanged.
 - Eloquent morph columns (addy.io `aliases.aliasable_type`) need the FQCN (`App\\Models\\Username`); tinker inserts need `new Model()` + `forceFill()` + `save()` (MassAssignmentException on `create()`).

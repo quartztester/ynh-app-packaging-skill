@@ -1,7 +1,7 @@
 ---
 name: ynh-app-packaging
 description: Use when writing or debugging a YunoHost app package.
-version: 2.10.1
+version: 2.11.0
 author: Hermes Agent
 license: MIT
 metadata:
@@ -28,6 +28,7 @@ Install = fetch the raw SKILL.md into the agent's skills dir (procedure: skill `
 - Subdomain-vs-subpath decisions; binding app config to env files.
 - "Make the app log YunoHost users in like forgejo/nextcloud" → research the app's auth backends FIRST (LDAP/OIDC/SAML/trusted-header/local), then wire per references/auth-backend-integration.md — before writing any script.
 - "Audit my packages / does anything need updating?" → fleet audit of all quartztester _ynh repos vs upstream + the box, read-only (references/upstream-repo-staleness-triage.md).
+- "Test/benchmark/measure this skill itself" (package an app with a fresh agent to score the skill) → references/benchmarking.md: with-skill vs baseline runs, calibrated static rubric (scripts/grade_static.py), parent-run live gates; judged on ecosystem usability, never line-parity with the official package.
 
 ## Golden rules
 1. NATIVE PACKAGING ONLY — no Docker, ever (user policy).
@@ -77,6 +78,7 @@ Indexed by symptom in references/platform-traps.md (router) — helpers/templati
 - references/native-runtime-and-sidecars.md — Docker-only upstreams packed natively.
 - references/postfix-integration.md — mail-stack conf_regen hooks + outbound SMTP wiring (§Outbound) with the mail-send gate recipe.
 - references/upstream-repo-staleness-triage.md — single-app staleness triage + fleet audit of all quartztester _ynh repos (procedure, manifest-parse gotchas, sourcing shapes).
+- references/benchmarking.md — benchmark THIS skill: fresh with-skill vs baseline packaging runs, rubric calibration against an official repo, live-gate sequencing, judging standard (ecosystem usability, not line-parity); rubric runner: scripts/grade_static.py.
 - references/official-docs.md — all official dev-doc pages indexed + doc-only facts: manifest keys, resources/helpers surface, LDAP table, hooks env vars, dev environments (Incus/LXC/VirtualBox), quality levels + CI mechanics, doc-vs-box contradiction register.
 - references/admin-ops-interface.md — admin-side behaviors a package must survive: backup/restore model (reinstall+reincorporate, core-only), path relocations/bind mounts, SFTP ACLs, permissions/portal, mail relay reality, cert/TLS customs, fail2ban, migrations, blast radius.
 - references/biglybt.md — feasibility probe worked example.
