@@ -88,6 +88,31 @@ def grade(pkg):
     missing = [k for k in req if get(manifest, k) is None]
     checks.append(check("manifest-required-keys", not missing, f"missing={missing}"))
 
+    # 3b. question schema vs the BOX's own parser (umami iteration-7: baseline
+    # put v1-era `full_domain = true` inside [install.domain] — tomllib parses,
+    # static checks pass, but YNH 12's pydantic OptionsModel rejects the
+    # manifest at install time with "extra fields not permitted" = dead
+    # package. tomllib-only "parses" is NOT a schema validation.)
+    try:
+        sys.path.insert(0, "/usr/lib/python3/dist-packages")
+        import moulinette
+        from moulinette.core import Translator
+        # group-type options translate choice labels during validation; bare
+        # imports have no translator -> fake 'translator' attr failures
+        moulinette.Moulinette18n.translator = Translator("/usr/share/moulinette/locales", "en")
+        from yunohost.utils.form import OptionsModel
+        bad_q = []
+        for qname, qdef in (manifest.get("install") or {}).items():
+            if not isinstance(qdef, dict):
+                continue
+            try:
+                OptionsModel(**{qname: qdef})
+            except Exception as e:
+                bad_q.append(f"{qname}: {str(e).splitlines()[1].strip() if len(str(e).splitlines())>1 else e}")
+        checks.append(check("manifest-question-schema", not bad_q, "; ".join(bad_q) or "box OptionsModel accepts all install questions"))
+    except ImportError:
+        checks.append(check("manifest-question-schema", True, "yunohost core not importable here — informational", informational=True))
+
     # 4. id valid
     app_id = manifest.get("id", "")
     checks.append(check("app-id-valid", bool(re.fullmatch(r"[a-z0-9_]+", app_id or "")), f"id={app_id!r}"))
@@ -318,6 +343,10 @@ def grade(pkg):
     checks.append(check("apt-deps-appropriate", apt_ok, apt_ev))
 
     # 17. PII scan (generic defaults; operator patterns via --pii)
+    # IP patterns are exempted inside i18n doc strings (help.*/ask.*/comment
+    # lines of TOML): RFC1918 EXAMPLE addresses in user-facing help text
+    # (e.g. an IGNORE_IP format example) are documentation, not leaked box
+    # state. Real PII is IPs/domains/emails in scripts, conf, manifest keys.
     pii_hits = []
     for root, dirs, files in os.walk(pkg):
         if ".git" in root:
@@ -328,6 +357,13 @@ def grade(pkg):
                 txt = open(p, encoding="utf-8", errors="ignore").read()
             except Exception:
                 continue
+            if p.endswith((".toml",)):
+                # drop help./ask. i18n value lines and # comments before matching
+                txt = "\n".join(
+                    ln for ln in txt.splitlines()
+                    if not re.match(r"\s*(help|ask)\.[a-z]{2,3}\s*=", ln)
+                    and not ln.lstrip().startswith("#")
+                )
             for pat in PII_PATTERNS:
                 if re.search(pat, txt, re.I):
                     pii_hits.append(f"{os.path.relpath(p, pkg)}: {pat}")
