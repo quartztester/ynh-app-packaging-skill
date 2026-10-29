@@ -1,7 +1,7 @@
 ---
 name: ynh-app-packaging
 description: Use when writing or debugging a YunoHost app package.
-version: 2.21.3
+version: 2.22.0
 author: Hermes Agent
 license: MIT
 metadata:
@@ -20,6 +20,13 @@ Caveman + ponytail MUST be active for the whole packaging session — they are w
 - caveman — terse-output mode, all technical substance kept: `https://raw.githubusercontent.com/JuliusBrussee/caveman/main/skills/caveman/SKILL.md` (repo https://github.com/JuliusBrussee/caveman)
 
 Install = fetch the raw SKILL.md into the agent's skills dir (procedure: skill `fetching-external-skills`), then load it with skill_view. Only if the environment truly cannot fetch skills, proceed anyway but hold every script/config/doc to the lean bar manually: no speculative code, no comment walls, smallest diff that works — verbosity is a defect, not a style choice.
+
+## AI-use policy — verbatim from the official YunoHost packaging docs
+> If you still decide to use AI, we highly recommend you to be transparent and responsible about it, and "own" it: you must be able to understand and explain every piece of your code as if you wrote it yourself, you must be able to explain what it does and why you chose to implement it this way. You can't just throw something you don't even understand yourself at other people, and expect them to maintain it for you.
+>
+> — https://doc.yunohost.org/en/dev/packaging/
+
+This skill's Definition of done exists to meet that bar: nothing is called done until it survives real install / upgrade / backup / restore cycles, and the packager is expected to read and be able to defend every line the skill helps produce — including the ones the agent wrote.
 
 ## When to Use
 - Writing or debugging a YunoHost app package (manifest.toml, scripts/, conf/); diagnosing install/upgrade/backup/restore/config-panel failures on YunoHost 11+/12.
