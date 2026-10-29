@@ -1,6 +1,6 @@
 ---
 name: ynh-app-packaging
-description: End-to-end rule set for writing, upgrading, debugging, or auditing a YunoHost 12 app package (_ynh) — manifest and install scripts, config panels, install-form and admin-doc UX, SSO wiring, Postfix mail integration, backup/restore/upgrade/change_url lifecycle gates, upstream source pinning, and catalog-submission readiness. Use whenever a task touches an app package for YunoHost: packaging a new app, fixing a failing install/upgrade/change_url, hardening an existing _ynh repo, or deciding what an install form or config panel should expose. Native packaging only (no Docker), helpers 2.1, gate-enforced.
+description: "End-to-end rule set for writing, upgrading, debugging, or auditing a YunoHost 12 app package (_ynh) — manifest and install scripts, config panels, install-form and admin-doc UX, SSO wiring, Postfix mail integration, backup/restore/upgrade/change_url lifecycle gates, upstream source pinning, and catalog-submission readiness. Use whenever a task touches an app package for YunoHost: packaging a new app, fixing a failing install/upgrade/change_url, hardening an existing _ynh repo, or deciding what an install form or config panel should expose. Native packaging only (no Docker), helpers 2.1, gate-enforced."
 license: GPL-3.0
 metadata:
   version: 2.25.0
