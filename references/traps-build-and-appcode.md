@@ -32,6 +32,9 @@ Carved from platform-traps.md 2026-10-27 (router there). Compile-time toolchain 
 
 - **Defense in depth for gated admin UIs (qbittorrent benchmark 2026-10-27)**: even when SSO/permission gates the WebUI and the app trusts localhost, SET the app's own admin password/hash at install. A baseline package left qBittorrent's WebUI at the default `admin`/`adminadmin` — and the daemon PRINTS "The Web UI administrator password has not been changed from the default" to the journal, readable by any local process. SSO gating is the outer wall, not the only one.
 
+## Composer advisory blocking vs old pinned majors (flarum 2026-10)
+- Recent composer (seen at 2.10.2) refuses by default to install packages with live Packagist security advisories, so an old pinned major whose transitive dep got flagged (flarum 1.8 → league/flysystem ^1.0) can no longer be FRESH-installed despite correct sha256: 'these were not loaded, because they are affected by security advisories'. Fix for upgrade-test fixtures of the old major: seed `$install_dir/.composer/config.json` with `{"config":{"policy":{"advisories":{"block":false}}}}` chowned to the app user — AFTER remove (app remove wipes it) and just before install; do not ship the policy in the package unless upstream has no unflagged resolution path.
+
 ## Framework-level traps (PHP/Laravel/Eloquent, anonaddy dogfood 2026-10-11)
 - Upstream artisan commands with `unique:` validations (e.g. addy.io `set-username-externalid`) exit 1 on idempotent re-runs — check the current value first and skip if unchanged.
 - Eloquent morph columns (addy.io `aliases.aliasable_type`) need the FQCN (`App\\Models\\Username`); tinker inserts need `new Model()` + `forceFill()` + `save()` (MassAssignmentException on `create()`).
