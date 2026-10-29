@@ -2,12 +2,12 @@
 name: ynh-app-packaging
 description: "End-to-end rule set for writing, upgrading, debugging, or auditing a YunoHost 12 app package (_ynh) — manifest and install scripts, config panels, install-form and admin-doc UX, SSO wiring, Postfix mail integration, backup/restore/upgrade/change_url lifecycle gates, upstream source pinning, and catalog-submission readiness. Use whenever a task touches an app package for YunoHost: packaging a new app, fixing a failing install/upgrade/change_url, hardening an existing _ynh repo, or deciding what an install form or config panel should expose. Native packaging only (no Docker), helpers 2.1, gate-enforced."
 license: GPL-3.0
+compatibility: "Any agentskills.io-compatible agent (Claude Code, OpenCode, Codex CLI, Hermes, Gemini CLI, Cursor, Goose). Needs a reachable YunoHost 12.x box (local or ssh shell), git, python3, and network access to github.com and doc.yunohost.org."
 metadata:
-  version: 2.25.0
+  version: "2.26.0"
   author: Hermes Agent
-  hermes:
-    tags: [yunohost, packaging, debian, sysadmin]
-    related_skills: [yunohost-server-admin]
+  tags: yunohost, packaging, debian, sysadmin
+  related-skills: yunohost-server-admin
 ---
 
 # YunoHost app packaging (YunoHost 12, helpers v2.1)
@@ -25,7 +25,7 @@ Caveman + ponytail MUST be active for the whole packaging session — they are w
 - ponytail — lazy-senior-dev mode, smallest change that fully solves the task: `https://raw.githubusercontent.com/DietrichGebert/ponytail/main/skills/ponytail/SKILL.md` (repo https://github.com/DietrichGebert/ponytail)
 - caveman — terse-output mode, all technical substance kept: `https://raw.githubusercontent.com/JuliusBrussee/caveman/main/skills/caveman/SKILL.md` (repo https://github.com/JuliusBrussee/caveman)
 
-Install = fetch the raw SKILL.md into the agent's skills dir (procedure: skill `fetching-external-skills`, or just curl the raw URL into the skills dir), then load it with skill_view. Only if the environment truly cannot fetch skills, proceed anyway but hold every script/config/doc to the lean bar manually: no speculative code, no comment walls, smallest diff that works — verbosity is a defect, not a style choice.
+Install = put each file at `<skills-dir>/<skill-name>/SKILL.md` (curl the raw URL or clone the companion repo; the target dir name must equal the skill name). Hermes: the skill `fetching-external-skills` automates this. Then load/activate both. Only if the environment truly cannot fetch skills, proceed anyway but hold every script/config/doc to the lean bar manually: no speculative code, no comment walls, smallest diff that works — verbosity is a defect, not a style choice.
 
 ## AI-use policy — verbatim from the official YunoHost packaging docs
 > If you still decide to use AI, we highly recommend you to be transparent and responsible about it, and "own" it: you must be able to understand and explain every piece of your code as if you wrote it yourself, you must be able to explain what it does and why you chose to implement it this way. You can't just throw something you don't even understand yourself at other people, and expect them to maintain it for you.
@@ -80,7 +80,7 @@ This skill's Definition of done exists to meet that bar: nothing is called done 
 ## Top traps
 Indexed by symptom in references/platform-traps.md (router) — helpers/templating/panels in traps-helpers-and-panels.md, durability/backup/restore in traps-lifecycle.md, build-stacks/app-code in traps-build-and-appcode.md, box-ops/driving-yunohost in traps-box-and-ops.md. Load the one that matches the failure, not all four.
 
-## References (skill_view name='ynh-app-packaging', file_path='references/…')
+## References — read on demand; paths are relative to this skill's directory (Hermes agents: skill_view(name='ynh-app-packaging', file_path='references/…'))
 - references/quality-gates.md — full When-to-Use/Standard-workflow text, functionality-gate + mail-send-gate mechanics, feasibility probe, verbosity audit, reviewer bar.
 - references/ui-questions-panels-docs.md — install-question / config-panel / ADMIN.md UX doctrine (calibrated on 199 catalog level-8 apps, five rounds; scripts + stats in `research/`): standard types need no ask, median 3 questions, permission defaults visitors, bind + services panel idiom, ADMIN.md = 4–24 lines normally, risk-correlated tail to ~124 for infra-exposing options.
 - references/platform-traps.md — ROUTER: symptom → topical traps file (below).

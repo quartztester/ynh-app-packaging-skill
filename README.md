@@ -13,7 +13,7 @@ It grew out of ~30 real packaging cycles (anubis, remark42, forgejo, gitea, umam
 ## What you get
 
 - Golden rules and a Definition of done with hard gates: real install, browser functionality check, anonymous/protected endpoint matrix, config-panel round-trip, backup → remove → restore with a data canary, upgrade ×2, change_url move, package_linter clean
-- A UX doctrine for install questions, config panels, and admin docs, calibrated against 99 catalog level-8 apps
+- A UX doctrine for install questions, config panels, and admin docs, calibrated against 199 catalog level-8 apps
 - A trap catalog covering helpers v2.1 renames, env quoting, panel getter poisoning, ssowat regex anchoring, build-stack version pins, upgrade durability, Postfix mail wiring
 - An SSO-first auth decision tree (LDAP / OIDC / SAML / trusted-header / local)
 - Scripts: conformance audit (detects hallucinated helper calls), static grader, skill self-check
@@ -21,7 +21,22 @@ It grew out of ~30 real packaging cycles (anubis, remark42, forgejo, gitea, umam
 
 ## Using it
 
-Copy this repo into your agent's skills directory (for example `~/.hermes/skills/devops/ynh-app-packaging`, or your agent's equivalent) and have the agent load `SKILL.md` before any packaging work. It pairs with two optional companion skills — caveman and ponytail — whose public URLs are in `SKILL.md`.
+This skill follows the open [Agent Skills](https://agentskills.io) standard — one `SKILL.md` read by Claude Code, OpenCode, Codex CLI, Gemini CLI, Cursor, Goose, Hermes, and 20+ other agents. Clone the repo into your agent's skills directory; the folder name must be `ynh-app-packaging`, matching the skill's `name` field:
+
+| Agent | Path |
+|-------|------|
+| Claude Code | `~/.claude/skills/ynh-app-packaging` (or `.claude/skills/` inside a project) |
+| OpenCode | `~/.config/opencode/skills/ynh-app-packaging` or `.opencode/skills/` — or reuse the Claude path, OpenCode reads `.claude/skills/` too |
+| Codex CLI | `~/.codex/skills/ynh-app-packaging`, or `$skill-installer` |
+| Hermes | `~/.hermes/skills/devops/ynh-app-packaging` |
+
+```bash
+git clone https://github.com/quartztester/ynh-app-packaging-skill ~/.claude/skills/ynh-app-packaging
+```
+
+Agents discover it from `name` + `description` and load the full `SKILL.md` when a task matches (Codex: `/skills`; Claude Code / OpenCode: automatic). It pairs with two optional companion skills — caveman and ponytail — whose public URLs are in `SKILL.md`.
+
+The skill body is agent-neutral by design: per-agent syntax appears only as parenthetical examples, never as the instruction itself, and every script runs on system `python3` with no agent runtime imported.
 
 Requires a YunoHost 12.x box with helpers 2.1; the skill refuses to run against anything else (Golden rule 0), because every trap in it is validated against that core only. Personal environment defaults (GitHub account, PAT path, workspace root, commit identity) are defined as overridable conventions at the top of SKILL.md.
 
