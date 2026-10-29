@@ -32,6 +32,10 @@ Carved from platform-traps.md 2026-10-27 (router there). Compile-time toolchain 
 
 - **Defense in depth for gated admin UIs (qbittorrent benchmark 2026-10-27)**: even when SSO/permission gates the WebUI and the app trusts localhost, SET the app's own admin password/hash at install. A baseline package left qBittorrent's WebUI at the default `admin`/`adminadmin` — and the daemon PRINTS "The Web UI administrator password has not been changed from the default" to the journal, readable by any local process. SSO gating is the outer wall, not the only one.
 
+## Composer major-jump upgrades: locks pin siblings (flarum 1→2, 2026-10)
+- Widening root `composer.json` constraints does NOT free `composer.lock`-pinned sibling packages: a core-targeted `require flarum/core:<new-major> -W` reports 'Problem N: <bundled ext> v1.x requires core ^1.x conflicts with root require' because '*' is already satisfied by the locked old version. A 1→2 jump needs: rewrite constraints (e.g. jq-widen the first-party family), pin core `--no-update`, then a FULL `composer update` (own guard branch by old/new major from app settings).
+- A root file rewritten by root (jq `> tmp && mv`) lands root-owned and breaks the next `sudo -u app composer` write ('./composer.json is not writable') — preserve ownership with `> tmp && cat tmp > file && rm tmp`, never mv.
+
 ## Composer advisory blocking vs old pinned majors (flarum 2026-10)
 - Recent composer (seen at 2.10.2) refuses by default to install packages with live Packagist security advisories, so an old pinned major whose transitive dep got flagged (flarum 1.8 → league/flysystem ^1.0) can no longer be FRESH-installed despite correct sha256: 'these were not loaded, because they are affected by security advisories'. Fix for upgrade-test fixtures of the old major: seed `$install_dir/.composer/config.json` with `{"config":{"policy":{"advisories":{"block":false}}}}` chowned to the app user — AFTER remove (app remove wipes it) and just before install; do not ship the policy in the package unless upstream has no unflagged resolution path.
 
