@@ -1,6 +1,6 @@
 # ynh-app-packaging
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](LICENSE)
 
 A lean, gate-enforced rule set that walks an AI agent — or a human — through packaging a native YunoHost 12 app, from `manifest.toml` to catalog submission, with every rule learned from live install/upgrade/backup/restore cycles rather than documentation alone.
 
@@ -23,7 +23,7 @@ It grew out of ~30 real packaging cycles (anubis, remark42, forgejo, gitea, umam
 
 Copy this repo into your agent's skills directory (for example `~/.hermes/skills/devops/ynh-app-packaging`, or your agent's equivalent) and have the agent load `SKILL.md` before any packaging work. It pairs with two optional companion skills — caveman and ponytail — whose public URLs are in `SKILL.md`.
 
-Requires a YunoHost 12.x box with helpers 2.1; the skill refuses to run against anything else (Golden rule 0), because every trap in it is validated against that core.
+Requires a YunoHost 12.x box with helpers 2.1; the skill refuses to run against anything else (Golden rule 0), because every trap in it is validated against that core only. Personal environment defaults (GitHub account, PAT path, workspace root, commit identity) are defined as overridable conventions at the top of SKILL.md.
 
 ## AI transparency
 
@@ -48,4 +48,4 @@ Issues and corrections welcome — especially live-gate failures you hit that th
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+GPLv3 — see [LICENSE](LICENSE).

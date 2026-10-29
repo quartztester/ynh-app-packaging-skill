@@ -1,9 +1,9 @@
 ---
 name: ynh-app-packaging
 description: Use when writing or debugging a YunoHost app package.
-version: 2.22.0
+version: 2.23.0
 author: Hermes Agent
-license: MIT
+license: GPL-3.0
 metadata:
   hermes:
     tags: [yunohost, packaging, debian, sysadmin]
@@ -14,12 +14,18 @@ metadata:
 
 Lean rule set. Gate mechanics, trap detail and per-app recipes live in references/ (indexed at the bottom) — load the one that matches the task, not all of them.
 
+## Environment conventions (defaults = this repo's maintainer; override for your setup)
+- `GH_ACCOUNT` — GitHub account that owns the `<app>_ynh` package repos (default `quartztester`)
+- `GH_TOKEN_FILE` — classic PAT file, mode 600, git credential.helper wired to it; export as `GH_TOKEN` for the `gh` CLI (default `/root/.gh_token`)
+- `WORKSPACE` — root dir where `<app>_ynh` packages are bootstrapped (default `/root/workspace`)
+- `COMMIT_AUTHOR` — noreply commit identity, `<id>+<login>@users.noreply.github.com` shape (default `91350035+quartztester@users.noreply.github.com`)
+
 ## Required companion skills — activate BEFORE writing any package code
 Caveman + ponytail MUST be active for the whole packaging session — they are what stops an unfamiliar model from writing verbose scripts, speculative settings, and comment walls (Golden rule 7 is enforced through them). If either is missing from the environment, download it first (raw files verified live 2026-10):
 - ponytail — lazy-senior-dev mode, smallest change that fully solves the task: `https://raw.githubusercontent.com/DietrichGebert/ponytail/main/skills/ponytail/SKILL.md` (repo https://github.com/DietrichGebert/ponytail)
 - caveman — terse-output mode, all technical substance kept: `https://raw.githubusercontent.com/JuliusBrussee/caveman/main/skills/caveman/SKILL.md` (repo https://github.com/JuliusBrussee/caveman)
 
-Install = fetch the raw SKILL.md into the agent's skills dir (procedure: skill `fetching-external-skills`), then load it with skill_view. Only if the environment truly cannot fetch skills, proceed anyway but hold every script/config/doc to the lean bar manually: no speculative code, no comment walls, smallest diff that works — verbosity is a defect, not a style choice.
+Install = fetch the raw SKILL.md into the agent's skills dir (procedure: skill `fetching-external-skills`, or just curl the raw URL into the skills dir), then load it with skill_view. Only if the environment truly cannot fetch skills, proceed anyway but hold every script/config/doc to the lean bar manually: no speculative code, no comment walls, smallest diff that works — verbosity is a defect, not a style choice.
 
 ## AI-use policy — verbatim from the official YunoHost packaging docs
 > If you still decide to use AI, we highly recommend you to be transparent and responsible about it, and "own" it: you must be able to understand and explain every piece of your code as if you wrote it yourself, you must be able to explain what it does and why you chose to implement it this way. You can't just throw something you don't even understand yourself at other people, and expect them to maintain it for you.
@@ -30,23 +36,23 @@ This skill's Definition of done exists to meet that bar: nothing is called done 
 
 ## When to Use
 - Writing or debugging a YunoHost app package (manifest.toml, scripts/, conf/); diagnosing install/upgrade/backup/restore/config-panel failures on YunoHost 11+/12.
-- "Install <app> from GitHub" → check for an EXISTING quartztester/<app>_ynh repo FIRST (`api.github.com/users/quartztester/repos` filtered on `_ynh`); never stand up an upstream Docker route while his `_ynh` exists.
+- "Install <app> from GitHub" → check for an EXISTING `$GH_ACCOUNT/<app>_ynh` repo FIRST (`api.github.com/users/$GH_ACCOUNT/repos` filtered on `_ynh`); never stand up an upstream Docker route while that `_ynh` exists.
 - "Would X be easy to package?" → feasibility probe (references/quality-gates.md): answer from cheap evidence, install nothing.
 - Subdomain-vs-subpath decisions; binding app config to env files.
 - "Make the app log YunoHost users in like forgejo/nextcloud" → research the app's auth backends FIRST (LDAP/OIDC/SAML/trusted-header/local), then wire per references/auth-backend-integration.md — before writing any script.
-- "Audit my packages / does anything need updating?" → fleet audit of all quartztester _ynh repos vs upstream + the box, read-only (references/upstream-repo-staleness-triage.md).
+- "Audit my packages / does anything need updating?" → fleet audit of all `$GH_ACCOUNT` _ynh repos vs upstream + the box, read-only (references/upstream-repo-staleness-triage.md).
 - "Test/benchmark/measure this skill itself" (package an app with a fresh agent to score the skill) → references/benchmarking.md: with-skill vs baseline runs, calibrated static rubric (scripts/grade_static.py), parent-run live gates; judged on ecosystem usability, never line-parity with the official package. "Research more level-8 apps / refine the UX doctrine" → corpus cross-check (benchmarking.md §Doctrine-corpus): verify pasted GUI evidence against the app's CURRENT tree, diverse app pool, tomllib stats, fold only contradictions.
 
 ## Golden rules
 0. ENVIRONMENT GUARD, before any packaging work: the box must be YunoHost 12.x with helpers 2.1 — `yunohost --version` major 12 AND `ls /usr/share/yunohost/helpers.v2.1.d/ >/dev/null`. On mismatch (YNH 13+, helpers ≠ 2.1): STOP — every trap below is validated against that core only; re-audit references/official-docs.md and re-run one covered app's gates before writing scripts here.
 1. NATIVE PACKAGING ONLY — no Docker, ever (user policy).
-2. BOOTSTRAP FROM example_ynh, always: `mkdir -p /root/workspace/<app>_ynh && tar xzf <skill_dir>/templates/example_ynh-snapshot.tar.gz -C /root/workspace/<app>_ynh`, then edit in place — never hand-write manifest/scripts or copy an old package's layout. Refresh the snapshot from upstream if older than a few weeks; re-fetch https://doc.yunohost.org/en/dev/packaging instead of recalling (all pages indexed + doc-only facts: references/official-docs.md); diff half-done packages against the snapshot and adopt missing template files.
+2. BOOTSTRAP FROM example_ynh, always: `mkdir -p $WORKSPACE/<app>_ynh && tar xzf <skill_dir>/templates/example_ynh-snapshot.tar.gz -C $WORKSPACE/<app>_ynh`, then edit in place — never hand-write manifest/scripts or copy an old package's layout. Refresh the snapshot from upstream if older than a few weeks; re-fetch https://doc.yunohost.org/en/dev/packaging instead of recalling (all pages indexed + doc-only facts: references/official-docs.md); diff half-done packages against the snapshot and adopt missing template files.
 3. PIN `helpers_version = "2.1"` in [integration] — without it a packaging_format=2 app silently loads dead 2.0 helpers. `scripts/verify_conformance.py` fails on any `ynh_*` call not defined in the local helpers.v2.1.d (hallucinated helpers are a static lint failure now; renames: references/traps-helpers-and-panels.md).
 4. SSO BY DEFAULT for any app with its own login — and pick the auth integration path (LDAP/OIDC/SAML/trusted-header/local) by RESEARCHING the app first, per references/auth-backend-integration.md. NEVER `auth_header=true` on a permission covering Bearer-token API routes (infinite login loop) — `auth_header` DEFAULTS to true in [resources.permissions], so Bearer-covered routes need it explicitly false. Patterns and traps: references/ssowat-integration.md.
 5. NO LIVE-ONLY FIXES — `ynh_setup_source` re-extracts on every pass (only `--keep` files survive) and `ynh_config_add` always overwrites managed config, so a box-side fix is UNPROVISIONED until it's in the repo AND landed via `yunohost app upgrade <app> -u <clone>`. Doctrine: references/traps-lifecycle.md.
 6. SECRETS live in app settings as the single source of truth; scripts re-render env/config from settings. NEVER regenerate a secret in upgrade/restore — create-once pattern: `ynh_app_setting_set_default --key=x --value=$(ynh_string_random)` (no-op + exports the var when already set).
 7. REVIEWER BAR: example_ynh IS the architecture — same file set, same v2 idioms, lean scripts (shared logic in _common.sh, no speculative settings, no comment walls). Deviating AI-generated packages get REJECTED at catalog review. Catalog quality levels (0–8) are bot-assigned from CI; level ≤4 gets the app HIDDEN and its upgrades FROZEN for every installed instance — the Definition of done below is what holds level ≥7.
-8. PUBLISH as quartztester: PAT /root/.gh_token (600, credential.helper wired — never embed the PAT in a remote URL); author 91350035+quartztester@users.noreply.github.com; repo <upstream-name>_ynh (manifest id: no `__`, no `.` — live 12.1 also accepts `-` but stay [a-z0-9_] catalog-style; the repo-name mismatch is fine); tag v<version>-ynh<N>; source tarballs/apt keys as GitHub Release assets. Server-driven changes to published repos: verify on the box, commit, WAIT for explicit user approval before pushing. Branch discipline: a catalog-listed repo's `main` is AUTO-PUBLISHED (catalog tracks HEAD of main, ~4 h rebuild) — work in feature branches, merge to main only fully-gated changes (repo-hygiene.md §Catalog-submission-mechanics).
+8. PUBLISH as `$GH_ACCOUNT`: PAT `$GH_TOKEN_FILE` (600, credential.helper wired — never embed the PAT in a remote URL); author `$COMMIT_AUTHOR`; repo <upstream-name>_ynh (manifest id: no `__`, no `.` — live 12.1 also accepts `-` but stay [a-z0-9_] catalog-style; the repo-name mismatch is fine); tag v<version>-ynh<N>; source tarballs/apt keys as GitHub Release assets. Server-driven changes to published repos: verify on the box, commit, WAIT for explicit user approval before pushing. Branch discipline: a catalog-listed repo's `main` is AUTO-PUBLISHED (catalog tracks HEAD of main, ~4 h rebuild) — work in feature branches, merge to main only fully-gated changes (repo-hygiene.md §Catalog-submission-mechanics).
 9. NOTHING LEAKS (ABSOLUTE): no names/emails/domains/usernames/IPs/subdomain inventories in any file, image, or commit history. 3-layer audit (tree grep, full-history grep, image vision-sweep) before EVERY push — procedure: references/repo-hygiene.md.
 10. CATALOG-READY EXTRAS ARE A HARD GATE: logos/<appid>.png square RGBA ≥180px with corner alpha verified 0; REAL doc/screenshots/*.png embedded in README+README_fr; full example_ynh file set (fr docs, PRE_/POST_ docs, dotfiles — canonical, never delete); upstream's real LICENSE text; script modes 755 lifecycle / 644 _common+change_url+config. DESCRIPTION/manifest text follows the catalog-presentation rules (no "self-hosted"/tech/fuzzy-adjective filler, multi-line feature lists, fr pairing): references/repo-hygiene.md. Sourcing ladder: references/repo-hygiene.md.
 11. MAIL VIA THE BOX'S POSTFIX whenever the app sends email (signup codes, invitations, notifications): default SMTP to `127.0.0.1:25`, plaintext, no auth — never an external SMTP provider; expose server/port/ssl/from in the config panel with that default. The From address must use a domain the server's outbound relay ACCEPTS (default `app@<install-domain>`; on relayhost boxes only the relay-verified domain works — subdomains of a verified domain are NOT verified). Env flags the app reads as "is this var set" (Ruby `.present?`, Go `os.Getenv != ""`) are TRUE for `"0"`/`"false"` — render them EMPTY for off, never `0`. Prove it with a REAL app-level send + mail.log relay handoff (`status=sent`) — recipe: references/postfix-integration.md §Outbound.
@@ -88,7 +94,7 @@ Indexed by symptom in references/platform-traps.md (router) — helpers/templati
 - references/repo-hygiene.md — NOTHING-leaks 3-layer audit, PII history scrub, logo/screenshot sourcing ladder, portal tile mechanics, conformance/banner sweeps (scripts/verify_conformance.py), tests.toml generator, branch pitfalls, catalog submission + pre-transfer CI path (developer CI / local package_check).
 - references/native-runtime-and-sidecars.md — Docker-only upstreams packed natively.
 - references/postfix-integration.md — mail-stack conf_regen hooks + outbound SMTP wiring (§Outbound) with the mail-send gate recipe.
-- references/upstream-repo-staleness-triage.md — single-app staleness triage + fleet audit of all quartztester _ynh repos (procedure, manifest-parse gotchas, sourcing shapes).
+- references/upstream-repo-staleness-triage.md — single-app staleness triage + fleet audit of all `$GH_ACCOUNT` _ynh repos (procedure, manifest-parse gotchas, sourcing shapes).
 - references/benchmarking.md — benchmark THIS skill: fresh with-skill vs baseline packaging runs, rubric calibration against an official repo, live-gate sequencing, judging standard (ecosystem usability, not line-parity); rubric runner: scripts/grade_static.py; ALSO doctrine corpus cross-check — calibrate UX/doc claims against level-8 catalog apps (verify pasted GUIs against current trees).
 - references/official-docs.md — all official dev-doc pages indexed + doc-only facts: manifest keys, resources/helpers surface, LDAP table, hooks env vars, dev environments (Incus/LXC/VirtualBox), quality levels + CI mechanics, doc-vs-box contradiction register.
 - references/admin-ops-interface.md — admin-side behaviors a package must survive: backup/restore model (reinstall+reincorporate, core-only), path relocations/bind mounts, SFTP ACLs, permissions/portal, mail relay reality, cert/TLS customs, fail2ban, migrations, blast radius.
@@ -97,7 +103,7 @@ Indexed by symptom in references/platform-traps.md (router) — helpers/templati
 
 ## Skill repo maintenance
 This skill directory is itself a git repo (branch `main`), kept for public GitHub publishing. Rules:
-- After ANY edit to SKILL.md, references/, scripts/ or templates/ — COMMIT it: author `quartztester <91350035+quartztester@users.noreply.github.com>`, message naming the change; tag `v<version>` on version bumps. An uncommitted edit is lost history. Git history begins at v2.8.0; earlier versions were never tracked.
+- After ANY edit to SKILL.md, references/, scripts/ or templates/ — COMMIT it: author `$COMMIT_AUTHOR`, message naming the change; tag `v<version>` on version bumps. An uncommitted edit is lost history. Git history begins at v2.8.0; earlier versions were never tracked.
 - Research-driven content changes (doc audits, upstream orgs, issues) are RECOMMENDED to the user first and implemented only after approval — never rewrite the skill unilaterally from a research pass.
 - EFFORT PRIORITY (user rule): the skill exists to make PACKAGING correct; benchmarking is secondary attribution. Every live-gate failure on a with-skill package is a skill gap — fold it into a trap or gate rule before anything else. Run a baseline arm only when a NEW gate class needs attribution, not every cycle.
 - ANTI-STUFFING (user rule): one canonical home per trap family — other references point to it, never restate it. A new trap/gate enters only after a live gate failure proves it, or when it covers a script every package ships untested (e.g. change_url). verify_skill_integrity.py's per-reference line budget enforces this at commit time — a SIZE failure means split or compress the file, never raise the budget.

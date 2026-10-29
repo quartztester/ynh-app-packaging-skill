@@ -1,10 +1,10 @@
 # Triage: why a `_ynh` repo lags upstream / is its auto-update bot dead?
 
-Answer "why is <app>_ynh still on version X? are the bots broken?" from repo evidence, never recall. All steps are read-only `gh api` (PAT /root/.gh_token via GH_TOKEN env).
+Answer "why is <app>_ynh still on version X? are the bots broken?" from repo evidence, never recall. All steps are read-only `gh api` (PAT `$GH_TOKEN_FILE` via GH_TOKEN env).
 
 ## Recipe (each step settles one question)
 ```bash
-export GH_TOKEN=$(cat /root/.gh_token)
+export GH_TOKEN=$(cat "$GH_TOKEN_FILE")
 R=YunoHost-Apps/<app>_ynh
 gh api repos/$R/commits --jq '.[0:5][] | .sha[0:8]+" "+.commit.committer.date+" "+(.commit.message|split("\n")[0])'   # repo alive? when last touched?
 gh api repos/$R/contents/manifest.toml --jq .content | base64 -d | grep -E '^version|\[resources.apt\]|packages'       # pinned version + apt deps
@@ -28,15 +28,15 @@ gh api repos/<upstream>/releases/latest --jq .tag_name                          
 ## Framing for the user
 Report the verified chain: manifest pin == apt version == Debian suite version; bot status separately (stub + 0 runs); repo maintenance status separately (recent merged PRs ≠ version control — the maintainer may be active yet version-locked). Check YunoHost release status (forum/roadmap) before promising the OS-migration path is production-safe.
 
-## Fleet audit: every quartztester _ynh repo at once
+## Fleet audit: every `$GH_ACCOUNT` _ynh repo at once
 
-For "audit all my packages / does anything need updating". Read-only; PAT from /root/.gh_token, never printed. Parallelize per-repo calls (8 workers) and dump the results JSON to the workspace so the report is re-derivable.
+For "audit all my packages / does anything need updating". Read-only; PAT from `$GH_TOKEN_FILE`, never printed. Parallelize per-repo calls (8 workers) and dump the results JSON to the workspace so the report is re-derivable.
 
 ### Procedure
-1. Enumerate: `api.github.com/users/quartztester/repos?per_page=100` (token header), keep names ending in `_ynh`. Exclude unsuffixed repos — those are upstream apps he owns (e.g. sveltia-cms-auth), not packages.
+1. Enumerate: `api.github.com/users/$GH_ACCOUNT/repos?per_page=100` (token header), keep names ending in `_ynh`. Exclude unsuffixed repos — those are upstream apps the account owns (e.g. sveltia-cms-auth), not packages.
 2. Per repo collect: default_branch; manifest.toml (default branch, fallback master/main) parsed for version, upstream.code, [resources.sources], [resources.apt]; root listing (conformance flags: tests.toml/LICENSE/README/logos/doc/conf); `.github/` listing + `actions/runs?per_page=1` total_count; upstream latest release else newest tag (from upstream.code or any source URL).
 3. Classify the sourcing shape (table below), then compare pinned vs upstream and count the gap.
-4. Catalog membership: fetch YunoHost/apps `apps.toml` once and grep quartztester — expect NONE (submission-PR-only policy). Consequence: zero bot CI anywhere, actions/runs = 0 on every repo, and autoupdate strategies in manifests are inert metadata. Report staleness as fully manual, not as broken bots.
+4. Catalog membership: fetch YunoHost/apps `apps.toml` once and grep `$GH_ACCOUNT` — expect NONE (submission-PR-only policy). Consequence: zero bot CI anywhere, actions/runs = 0 on every repo, and autoupdate strategies in manifests are inert metadata. Report staleness as fully manual, not as broken bots.
 5. Cross-check the box: `unset PYTHONPATH; yunohost app list --output-as json` — report installed apps lagging their own repo HEAD (~ynhN behind) separately from upstream lag; both are actionable.
 6. Report as one table grouped by verdict (behind / up-to-date / nothing-to-track) with gap counts, then housekeeping flags (docker-based package violating the native-only rule, conformance gaps). End with a bump-order proposal; pushes stay approval-gated.
 
