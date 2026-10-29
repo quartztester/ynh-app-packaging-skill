@@ -1,7 +1,7 @@
 ---
 name: ynh-app-packaging
 description: Use when writing or debugging a YunoHost app package.
-version: 2.21.2
+version: 2.21.3
 author: Hermes Agent
 license: MIT
 metadata:
@@ -69,7 +69,7 @@ Indexed by symptom in references/platform-traps.md (router) — helpers/templati
 
 ## References (skill_view name='ynh-app-packaging', file_path='references/…')
 - references/quality-gates.md — full When-to-Use/Standard-workflow text, functionality-gate + mail-send-gate mechanics, feasibility probe, verbosity audit, reviewer bar.
-- references/ui-questions-panels-docs.md — install-question / config-panel / ADMIN.md UX doctrine (calibrated on 49 catalog level-8 apps, three rounds): standard types need no ask, median 3–4.5 questions, panel sections by concern with ask=question/help=consequence, exclude tuning walls, ADMIN.md = 4–24 lines normally, risk-correlated tail to ~124 for infra-exposing options.
+- references/ui-questions-panels-docs.md — install-question / config-panel / ADMIN.md UX doctrine (calibrated on 99 catalog level-8 apps, four rounds): standard types need no ask, median 3–4.5 questions (mode 3), password questions only where sso!=true, panels optional & typically 1–3 options, ADMIN.md = 4–24 lines normally, risk-correlated tail to ~124 for infra-exposing options.
 - references/platform-traps.md — ROUTER: symptom → topical traps file (below).
 - references/traps-helpers-and-panels.md — helper renames, templating, env quoting, config panels, systemd asymmetries, ynh_restore permissions.
 - references/traps-lifecycle.md — upgrade-durability doctrine, patches/, backups-run-archived-scripts, canary discipline, remove/half-registered cleanup.
