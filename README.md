@@ -39,6 +39,7 @@ This skill's gates exist to make that bar reachable: nothing is called done unti
 
 - `SKILL.md` — the rule set; start here
 - `references/` — 18 topical files: traps, gates, UX doctrine, per-app recipes, official-docs index
+- `research/` — the level-8 UX calibration corpus: methodology, round selections, reusable scripts (`research/README.md`)
 - `scripts/` — `verify_conformance.py`, `grade_static.py`, `verify_skill_integrity.py`
 - `templates/` — `example_ynh-snapshot.tar.gz` bootstrap skeleton
 

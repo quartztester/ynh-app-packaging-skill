@@ -1,7 +1,7 @@
 ---
 name: ynh-app-packaging
 description: Use when writing or debugging a YunoHost app package.
-version: 2.23.0
+version: 2.24.0
 author: Hermes Agent
 license: GPL-3.0
 metadata:
@@ -82,7 +82,7 @@ Indexed by symptom in references/platform-traps.md (router) — helpers/templati
 
 ## References (skill_view name='ynh-app-packaging', file_path='references/…')
 - references/quality-gates.md — full When-to-Use/Standard-workflow text, functionality-gate + mail-send-gate mechanics, feasibility probe, verbosity audit, reviewer bar.
-- references/ui-questions-panels-docs.md — install-question / config-panel / ADMIN.md UX doctrine (calibrated on 99 catalog level-8 apps, four rounds): standard types need no ask, median 3–4.5 questions (mode 3), password questions only where sso!=true, panels optional & typically 1–3 options, ADMIN.md = 4–24 lines normally, risk-correlated tail to ~124 for infra-exposing options.
+- references/ui-questions-panels-docs.md — install-question / config-panel / ADMIN.md UX doctrine (calibrated on 199 catalog level-8 apps, five rounds; scripts + stats in `research/`): standard types need no ask, median 3 questions, permission defaults visitors, bind + services panel idiom, ADMIN.md = 4–24 lines normally, risk-correlated tail to ~124 for infra-exposing options.
 - references/platform-traps.md — ROUTER: symptom → topical traps file (below).
 - references/traps-helpers-and-panels.md — helper renames, templating, env quoting, config panels, systemd asymmetries, ynh_restore permissions.
 - references/traps-lifecycle.md — upgrade-durability doctrine, patches/, backups-run-archived-scripts, canary discipline, remove/half-registered cleanup.
@@ -102,8 +102,10 @@ Indexed by symptom in references/platform-traps.md (router) — helpers/templati
 - templates/example_ynh-snapshot.tar.gz — bootstrap skeleton; scripts/verify_conformance.py — repo conformance audit; scripts/verify_skill_integrity.py — skill self-check (reference resolution both ways + PII patterns as --pii args).
 
 ## Skill repo maintenance
-This skill directory is itself a git repo (branch `main`), kept for public GitHub publishing. Rules:
+This skill directory is itself a git repo (branch `main`), PUBLISHED at https://github.com/quartztester/ynh-app-packaging-skill (GPLv3; other agents install from its raw SKILL.md URL). Rules:
 - After ANY edit to SKILL.md, references/, scripts/ or templates/ — COMMIT it: author `$COMMIT_AUTHOR`, message naming the change; tag `v<version>` on version bumps. An uncommitted edit is lost history. Git history begins at v2.8.0; earlier versions were never tracked.
+- PUSH, then VERIFY the push: push with the wired credential helper (never the PAT in a remote URL), then confirm remote HEAD sha == local HEAD, the expected tags exist on the remote, and the raw SKILL.md URL fetches anonymously with the current frontmatter. A push that was not verified is not published.
+- PUBLIC-RELEASE BAR, kept met on every push: LICENSE is the canonical GPLv3 text fetched from gnu.org — never hand-write legal text; README.md stays dual-audience (what/why, what you get, install URL, AI-transparency quote); personal environment values appear ONLY as the conventions-block defaults — new rules use the `$GH_ACCOUNT`/`$GH_TOKEN_FILE`/`$WORKSPACE`/`$COMMIT_AUTHOR` variables, never the maintainer's literal account or paths.
 - Research-driven content changes (doc audits, upstream orgs, issues) are RECOMMENDED to the user first and implemented only after approval — never rewrite the skill unilaterally from a research pass.
 - EFFORT PRIORITY (user rule): the skill exists to make PACKAGING correct; benchmarking is secondary attribution. Every live-gate failure on a with-skill package is a skill gap — fold it into a trap or gate rule before anything else. Run a baseline arm only when a NEW gate class needs attribution, not every cycle.
 - ANTI-STUFFING (user rule): one canonical home per trap family — other references point to it, never restate it. A new trap/gate enters only after a live gate failure proves it, or when it covers a script every package ships untested (e.g. change_url). verify_skill_integrity.py's per-reference line budget enforces this at commit time — a SIZE failure means split or compress the file, never raise the budget.
