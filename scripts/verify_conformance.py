@@ -6,8 +6,10 @@ banner title casing (ALL-CAPS ASCII); canonical heads (IMPORT GENERIC HELPERS
 first banner; 'source _common.sh'; '../settings/scripts/_common.sh' + its
 Keep-comment in backup/restore; config sources helpers only); END OF SCRIPT
 trailer in the six lifecycle scripts; bash -n on every script; required
-template files; every ynh_* helper called in scripts/ exists in the local
-/usr/share/yunohost/helpers.v2.1.d (skipped with INFO on non-YunoHost hosts).
+template files; [integration].helpers_version pinned to "2.1" on
+packaging_format=2 manifests; every ynh_* helper called in code (not in
+comments) exists in the local /usr/share/yunohost/helpers.v2.1.d (skipped
+with INFO on non-YunoHost hosts).
 
 NOT covered — do manually: PNG/logo validity, PII sweep, package_linter.
 
@@ -96,6 +98,23 @@ def audit(repo, helpers=None):
         if not (repo / rel).exists():
             infos.append(f"{rel} absent")
 
+    # [integration].helpers_version must pin "2.1" — without it a
+    # packaging_format=2 app silently loads the dead 2.0 helpers
+    # (fleet audit 2026-10: 28/183 top-star catalog repos lack the pin).
+    mpath = repo / "manifest.toml"
+    if mpath.is_file():
+        mtxt = mpath.read_text(errors="replace")
+        if not re.search(r"^packaging_format\s*=\s*2", mtxt, re.M):
+            infos.append("manifest not packaging_format 2 (helpers_version gate skipped)")
+        else:
+            sec = re.search(r"^\[integration\][^\[]*", mtxt, re.M | re.S)
+            hv = re.search(r'^helpers_version\s*=\s*"([^"]+)"',
+                           sec.group(0) if sec else mtxt, re.M)
+            if not hv:
+                issues.append('manifest.toml [integration] missing helpers_version = "2.1"')
+            elif hv.group(1) != "2.1":
+                issues.append(f'manifest.toml pins helpers_version = "{hv.group(1)}" (want "2.1")')
+
     # script modes: git index when available, stat otherwise
     modes = {}
     if (repo / ".git").exists():
@@ -180,8 +199,11 @@ def audit(repo, helpers=None):
             issues.append(f"scripts/{name} bash -n: {err[-1] if err else 'syntax error'}")
 
         if helpers is not None:
+            # comment lines are prose, not calls (fleet-lint lesson: prose
+            # like "Hence ynh_backups calls ..." was a false hallucination)
+            code_only = "\n".join(ln for ln in lines if not ln.lstrip().startswith("#"))
             called = set(re.findall(r"(?<![\w/.@=\"-])(ynh_[a-z0-9_]+)(?![\w.])",
-                                    "\n".join(lines)))
+                                    code_only))
             for h in sorted(called - helpers - repo_defined):
                 issues.append(f"scripts/{name} calls unknown helper {h}()")
     return issues, infos
