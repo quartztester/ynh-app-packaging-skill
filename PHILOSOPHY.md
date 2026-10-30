@@ -1,79 +1,73 @@
-# Package It Anyway
+# The Tail Is the Point
 
-*A YunoHost packaging creed — and a defense of the machines that help.*
+*A YunoHost packaging creed.*
 
-Docker gives you ten minutes. The eighth month kills you.
+Wikipedia is 15% of Kiwix's downloads. The famous thing — the reason you think
+you know Kiwix — serves one download in seven. **60% of downloads aren't in
+the top 500.** The long tail is not the edge of the demand curve. It *is* the
+demand curve. ([Kiwix, "Our (very) Long
+Tail"](https://hub.kiwix.org/weblog/2024/03/our-very-long-tail/))
 
-Ten minutes: copy the compose file, `up`, it works — the seduction is real, we
-concede it. Then the certificates expire. The backups silently stop. fail2ban
-isn't watching this one. DNS doesn't resolve. Upstream ships a breaking tag.
-Every one of those boring micro-issues is yours, alone, at midnight — because
-the stack was built for the moment of deployment and nobody, **nobody**,
-optimizes the eighth month.
-([Aleks, YunoHost forum](https://forum.yunohost.org/t/will-yunohost-be-able-to-keep-up-with-all-updates/26739/11))
-
-## Why the wheel gets remade
-
-Aleks has watched this graveyard fill for years: people "get 'tired of
-maintaining their stuff' and give up." His arithmetic is the whole creed — if
-everyone rolling their own stack gave **2% of their time to a common one**,
-"we would live in self-hosting utopia since quite a while."
-
-But look at *why* the wheel gets remade. Not hubris — an empty shelf.
-Somebody needs their one weird app: the federation tool, the niche dashboard,
-the thing with eleven users worldwide. The common stack doesn't have it yet.
-So they don't join the commons; they hand-roll the entire wheel to get the
-one spoke they wanted — same stack, same pitfalls, solo — and eight months
-later the server goes dark.
-
-The catalog carries the receipt: **515 apps** sit in
+Every software shelf has this shape. We build for the head — the ten apps
+everyone can name — and the people live in the tail: the federation tool, the
+niche dashboard, the thing with eleven users worldwide. Self-hosting lives
+hardest in the tail, and the YunoHost catalog carries the receipt: **515
+apps** sit in
 [`wishlist.toml`](https://github.com/YunoHost/apps/blob/master/wishlist.toml)
 — five hundred and fifteen people standing at a door that hasn't been built
-yet. Every unshelved wishlist entry is a future defector to solo
-stack-rolling. The queue *is* the leak.
+yet. Nobody adopts a platform for its top ten apps. They adopt it the night
+they search for their one weird thing and find it installable — certificates,
+backups, fail2ban already done. The door is the product.
 
-## The tail is the point
+The tail is not the margin of this project. The tail is the point.
 
-Kiwix publishes its numbers: Wikipedia — the reason you think you know Kiwix
-— is **15% of downloads**. **60% of downloads aren't in the top 500.** The
-long tail is not the edge of the demand curve. It *is* the demand curve.
-([Our (very) Long Tail](https://hub.kiwix.org/weblog/2024/03/our-very-long-tail/))
-
-Nobody adopts a platform for its top ten apps. They adopt it the night they
-find their one weird thing installable — with certificates, backups, and
-fail2ban already done. The door is the product; YunoHost's own sentence says
-so — digital services *that you control*, with very little technical
-knowledge. A shelf pruned to what is comfortable to maintain is a shelf that
-quietly stops inviting.
-
-## The bottleneck was never ideology. It was hours.
+## What the tail costs
 
 Packaging is real work: manifest, six lifecycle scripts, nginx conf, systemd
 unit, CI — and upgrades forever after. The shelf exists because hundreds of
-humans donated those hours. But the queue is 515 deep, and human hours do
-not scale to a long tail. That is the honest reason shelves get pruned, why
-"maintenance overhead" becomes a reason to say no, why doors close — not
-from malice, from arithmetic.
+humans donated those hours. But the queue is 515 deep, and human hours do not
+scale to a tail this long. That is the honest reason shelves get pruned and
+"maintenance overhead" becomes a reason to say no: not malice — arithmetic.
+Triage is how the tail dies.
 
-## The machine changes the arithmetic
+## What an unserved tail costs
 
-Here is the part you may not want to hear: **AI-assisted packaging is how
-the 2% scales to the tail.**
+Somebody needs their one weird app. The commons doesn't have it yet. Docker
+Hub does — ten minutes, copy the compose file, `up`, and the seduction works.
+So they don't join the commons; they hand-roll the entire wheel to get the
+one spoke they wanted. And the wheel is never just the app: certificates,
+backups, fail2ban, DNS, upgrades, monitoring, a shitload of boring
+micro-issues at midnight. Docker optimizes the moment of deployment. Nobody
+— **nobody** — optimizes the eighth month.
+([Aleks, YunoHost forum](https://forum.yunohost.org/t/will-yunohost-be-able-to-keep-up-with-all-updates/26739/11))
 
-The format is uniform — one file layout across the whole catalog (2026-10
-audit of all 483 active org packages: same script set, 98% `conf/`, 98%
-`tests.toml`), shared helpers, standard CI. That uniformity is not
-bureaucracy. It is what makes a package machine-writable: the boring 80% —
-scaffolding, manifest fields, the nginx conf, the upgrade path — is
-mechanical, and mechanical work is what machines are for. The judgment stays
-human: real configurations, live-box installs, upgrade proofs, review. One
-maintainer with an agent shelves what one maintainer alone never could.
+Aleks has watched this graveyard fill for years: people "get 'tired of
+maintaining their stuff' and give up." His arithmetic is the repair — if
+everyone rolling their own stack gave **2% of their time to a common one**,
+"we would live in self-hosting utopia since quite a while." A compose file
+is a private good: it serves one box and dies with its author. A `_ynh`
+package is a public good: every fix becomes infrastructure on every server
+running it. Every unshelved wishlist entry is a future defector to solo
+stack-rolling. The queue is the leak.
+
+## How the tail gets shelved
+
+The 2% has a bottleneck: hours. Hours now have a lever.
+
+The packaging format is uniform — one file layout across all 483 active
+packages (same script set, 98% `conf/`, 98% `tests.toml`; 2026-10 audit),
+shared helpers, standard CI. That uniformity is not bureaucracy; it is what
+makes a package machine-writable. The boring 80% — scaffolding, manifest
+fields, the nginx conf, the upgrade path — is mechanical, and mechanical
+work is what machines are for. The judgment stays human: real
+configurations, live-box installs, upgrade proofs, review. One maintainer
+with an agent shelves what one maintainer alone never could.
 
 And the trust problem is already solved, because the catalog already trusts
 machines: quality levels are bot-assigned from CI, and package_check grades
-every package before any human looks at it. If a machine may *judge* every
-package, a machine helping *write* one is not a category change — the gates
-do not care who typed. What the community deserves is honesty, not purity:
+every package before any human looks at it. A machine may *judge* every
+package; a machine helping *write* one is not a category change. The gates
+do not care who typed — they care what passes. Honesty is the obligation:
 disclose the assistance (the `Assisted-by:` trailer), keep the scripts
 legible to the 3 a.m. human, pin what you ship, test what you ship.
 
@@ -96,21 +90,19 @@ legible to the 3 a.m. human, pin what you ship, test what you ship.
 
 ## The charge
 
-You will never have a perfect stack. Nobody's is. The only question is
-whether the imperfection is **shared** — one bug, fixed once, on everyone's
-shelf at once — or **private**, suffered alone until you give up and the
-server goes dark.
+Serve the head and you compete with Docker for the same ten apps. Serve the
+tail and you are the only ones in the room where the people are.
 
-So make the 2% faster: autoupdate, CI gates, shared helpers — and agents.
-The queue is 515 long and every human hour is spoken for. Let the machine
-type. You verify. **Package it anyway.**
+Label, don't delete. Let the machine type; you verify. Give the 2%.
+
+**The tail is the point. Package it anyway.**
 
 ---
 
 ### Sources
 
-- Aleks, [YunoHost forum thread 26739, reply 11](https://forum.yunohost.org/t/will-yunohost-be-able-to-keep-up-with-all-updates/26739/11) (2023-10-15) — the eighth-month list, "tired of maintaining their stuff," the 2% utopia.
 - Kiwix, ["Our (very) Long Tail"](https://hub.kiwix.org/weblog/2024/03/our-very-long-tail/) (2024-03-28) — 15% / 60%.
+- Aleks, [YunoHost forum thread 26739, reply 11](https://forum.yunohost.org/t/will-yunohost-be-able-to-keep-up-with-all-updates/26739/11) (2023-10-15) — the eighth-month list, "tired of maintaining their stuff," the 2% utopia.
 - [YunoHost/apps](https://github.com/YunoHost/apps): `apps.toml`, `wishlist.toml`, `graveyard.toml` — 26 flagged / 515 queued / 131 buried (2026-10-30).
 - 483-package corpus audit (2026-10-30): uniform script set, 98% `conf/`, 98% `tests.toml` — the uniformity that makes packages machine-writable.
 - [yunohost.org](https://yunohost.org/) — "digital services (apps) that you control."
