@@ -4,7 +4,7 @@ description: "End-to-end rule set for writing, upgrading, debugging, or auditing
 license: GPL-3.0
 compatibility: "Any agentskills.io-compatible agent (Claude Code, OpenCode, Codex CLI, Hermes, Gemini CLI, Cursor, Goose). Needs a reachable YunoHost 12.x box (local or ssh shell), git, python3, and network access to github.com and doc.yunohost.org."
 metadata:
-  version: "2.26.0"
+  version: "2.27.0"
   author: Hermes Agent
   tags: yunohost, packaging, debian, sysadmin
   related-skills: yunohost-server-admin
@@ -65,7 +65,9 @@ This skill's Definition of done exists to meet that bar: nothing is called done 
 3. CONFIG PANEL round-trip: get → set (`-a "k=v&k=v"` with SHORT setting names) → get, gated on the RENDERED FILE's content (CLI exit lies); settings-bound panels need a `ynh_app_config_apply` override that re-renders files. What to expose + wording doctrine: references/ui-questions-panels-docs.md.
 4. BACKUP → REMOVE → RESTORE, then RE-RUN the functionality gate on the restored app. Canary (DB row + panel change) created RIGHT BEFORE the backup, asserted after. After any repo fix: upgrade first (refreshes the archived scripts), THEN re-create the backup, THEN test restore.
 5. UPGRADE ×2: same-version `app upgrade -u <clone> -F` twice, then re-run the functionality gate — the second pass catches fresh-install-only scripts.
-5b. CHANGE_URL MOVE (quality-gates.md §5 CHANGE_URL MOVE): relocate the live install once (new path, or second domain for full-domain apps), re-run 2b + functionality gate + canary read, move back. An unexecuted change_url is an untested script.
+5b. CHANGE_URL MOVE (quality-gates.md §5 CHANGE_URL MOVE): relocate the live install once (new path, or second domain for full-domain apps — `yunohost domain add` one if the box has none; app that fundamentally can't move → document + exclude `change_url` in tests.toml + prove the backup→remove→reinstall→restore fallback), re-run 2b + functionality gate + canary read, move back. An unexecuted change_url is an untested script.
+5c. REINSTALL (quality-gates.md §5 REINSTALL GATE): plain `remove` (data dir retained) → fresh install → functionality gate + data-dir canary — the local twin of CI's install/remove/reinstall scenario; for multi_instance=false apps the only second-install proof (CI skips install.multi when false).
+5d. MULTI_INSTANCE DECLARED RIGHT (quality-gates.md §Multi-instance decision rule): true by default; false only for machine-global resources, reason stated in a manifest comment + ADMIN.md; false packages SELF-GUARD install (YNH 12.1 does not refuse a second copy — official-docs.md §15.6).
 6. REMOVE cleanly: no stale services/sudoers/nginx maps; half-registered apps need the placeholder-unit trick (references/traps-lifecycle.md).
 7. LINTER clean except 'not in catalog', output PASTED into the REPORT (evidence, not assertion). Known shapes: `cpe = "???"` placeholder fails the manifest schema — set a real `cpe:2.3:a:<vendor>:<product>`; 'could not be parsed' lines on multi-line `bash -c` strings are parser noise — live gates arbitrate.
 8. ASSETS + tests.toml: rule-10 set complete; test_upgrade_from entries from the repo's OWN history; `args.<key> = "ci-..."` for required-no-default install questions.
@@ -81,7 +83,7 @@ This skill's Definition of done exists to meet that bar: nothing is called done 
 Indexed by symptom in references/platform-traps.md (router) — helpers/templating/panels in traps-helpers-and-panels.md, durability/backup/restore in traps-lifecycle.md, build-stacks/app-code in traps-build-and-appcode.md, box-ops/driving-yunohost in traps-box-and-ops.md. Load the one that matches the failure, not all four.
 
 ## References — read on demand; paths are relative to this skill's directory (Hermes agents: skill_view(name='ynh-app-packaging', file_path='references/…'))
-- references/quality-gates.md — full When-to-Use/Standard-workflow text, functionality-gate + mail-send-gate mechanics, feasibility probe, verbosity audit, reviewer bar.
+- references/quality-gates.md — full When-to-Use/Standard-workflow text, functionality-gate + mail-send-gate mechanics, reinstall gate, multi-instance decision rule, feasibility probe, verbosity audit, reviewer bar.
 - references/ui-questions-panels-docs.md — install-question / config-panel / ADMIN.md UX doctrine (calibrated on 199 catalog level-8 apps, five rounds; scripts + stats in `research/`): standard types need no ask, median 3 questions, permission defaults visitors, bind + services panel idiom, ADMIN.md = 4–24 lines normally, risk-correlated tail to ~124 for infra-exposing options.
 - references/platform-traps.md — ROUTER: symptom → topical traps file (below).
 - references/traps-helpers-and-panels.md — helper renames, templating, env quoting, config panels, systemd asymmetries, ynh_restore permissions.

@@ -382,8 +382,37 @@ def grade(pkg):
                         informational=True))
 
     # 19. multi-instance declaration (v2: integration.multi_instance)
+    # true passes; false passes ONLY with a stated reason (comment on the
+    # manifest key, or a single/multi-instance note in doc/ADMIN.md or README)
+    # — decision rule: references/quality-gates.md §Multi-instance
     mi = get(manifest, "integration.multi_instance")
-    checks.append(check("multi-instance-declared", mi is True, f"integration.multi_instance={mi}"))
+    if mi is True:
+        checks.append(check("multi-instance-declared", True, "integration.multi_instance=true"))
+    else:
+        reason = False
+        try:
+            with open(os.path.join(pkg, "manifest.toml")) as f:
+                mlines = f.read().splitlines()
+            for i, ln in enumerate(mlines):
+                if "multi_instance" in ln:
+                    if "#" in ln or (i and "#" in mlines[i - 1]):
+                        reason = True
+        except OSError:
+            pass
+        for doc in ("doc/ADMIN.md", "README.md"):
+            try:
+                with open(os.path.join(pkg, doc)) as f:
+                    if re.search(r"(single|multi)[- ]instance", f.read(), re.I):
+                        reason = True
+            except OSError:
+                pass
+        if mi is False:
+            checks.append(check("multi-instance-declared", reason,
+                                "false WITH stated reason" if reason else
+                                "multi_instance=false WITHOUT stated reason — add a comment on the manifest key or a single-instance note in doc/ADMIN.md (quality-gates.md §Multi-instance)"))
+        else:
+            checks.append(check("multi-instance-declared", False,
+                                f"integration.multi_instance={mi} — must be true, or false with a stated reason"))
 
     # 20. nginx conf wires PHP-FPM
     ng = ""
