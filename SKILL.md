@@ -4,7 +4,7 @@ description: "End-to-end rule set for writing, upgrading, debugging, or auditing
 license: GPL-3.0
 compatibility: "Any agentskills.io-compatible agent (Claude Code, OpenCode, Codex CLI, Hermes, Gemini CLI, Cursor, Goose). Needs a reachable YunoHost 12.x box (local or ssh shell), git, python3, and network access to github.com and doc.yunohost.org."
 metadata:
-  version: "2.27.1"
+  version: "2.27.2"
   author: Hermes Agent
   tags: yunohost, packaging, debian, sysadmin
   related-skills: yunohost-server-admin
@@ -102,7 +102,7 @@ Indexed by symptom in references/platform-traps.md (router) — helpers/templati
 - references/official-docs.md — all official dev-doc pages indexed + doc-only facts: manifest keys, resources/helpers surface, LDAP table, hooks env vars, dev environments (Incus/LXC/VirtualBox), quality levels + CI mechanics, doc-vs-box contradiction register.
 - references/admin-ops-interface.md — admin-side behaviors a package must survive: backup/restore model (reinstall+reincorporate, core-only), path relocations/bind mounts, SFTP ACLs, permissions/portal, mail relay reality, cert/TLS customs, fail2ban, migrations, blast radius.
 - references/biglybt.md — feasibility probe worked example.
-- templates/example_ynh-snapshot.tar.gz — bootstrap skeleton; scripts/verify_conformance.py — repo conformance audit; scripts/verify_skill_integrity.py — skill self-check (reference resolution both ways + PII patterns as --pii args).
+- templates/example_ynh-snapshot.tar.gz — bootstrap skeleton; scripts/verify_conformance.py — repo conformance audit; scripts/verify_skill_integrity.py — skill self-check (reference resolution both ways + PII patterns as --pii args; invoke with the skill dir as its argument, e.g. `python3 scripts/verify_skill_integrity.py .` from the repo root).
 
 ## Skill repo maintenance
 This skill directory is itself a git repo (branch `main`), PUBLISHED at https://github.com/quartztester/ynh-app-packaging-skill (GPLv3; other agents install from its raw SKILL.md URL). Rules:
