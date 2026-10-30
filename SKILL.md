@@ -4,7 +4,7 @@ description: "End-to-end rule set for writing, upgrading, debugging, or auditing
 license: GPL-3.0
 compatibility: "Any agentskills.io-compatible agent (Claude Code, OpenCode, Codex CLI, Hermes, Gemini CLI, Cursor, Goose). Needs a reachable YunoHost 12.x box (local or ssh shell), git, python3, and network access to github.com and doc.yunohost.org."
 metadata:
-  version: "2.27.7"
+  version: "2.27.8"
   author: Hermes Agent
   tags: yunohost, packaging, debian, sysadmin
   related-skills: yunohost-server-admin
@@ -83,7 +83,7 @@ This skill's Definition of done exists to meet that bar: nothing is called done 
 Indexed by symptom in references/platform-traps.md (router) — helpers/templating/panels in traps-helpers-and-panels.md, durability/backup/restore in traps-lifecycle.md, build-stacks/app-code in traps-build-and-appcode.md, box-ops/driving-yunohost in traps-box-and-ops.md. Load the one that matches the failure, not all four.
 
 ## References — read on demand; paths are relative to this skill's directory (Hermes agents: skill_view(name='ynh-app-packaging', file_path='references/…'))
-- references/quality-gates.md — full When-to-Use/Standard-workflow text, functionality-gate + mail-send-gate mechanics, reinstall gate, multi-instance decision rule, feasibility probe, verbosity audit, reviewer bar.
+- references/quality-gates.md — full When-to-Use/Standard-workflow text, functionality-gate + mail-send-gate mechanics, reinstall gate, multi-instance decision rule, feasibility probe, verbosity audit, reviewer bar, comment-density calibration vs top-50 catalog repos (median 9.7% non-banner).
 - references/ui-questions-panels-docs.md — install-question / config-panel / ADMIN.md UX doctrine (calibrated on 199 catalog level-8 apps, five rounds; scripts + stats in `research/`): standard types need no ask, median 3 questions, permission defaults visitors, bind + services panel idiom, ADMIN.md = 4–24 lines normally, risk-correlated tail to ~124 for infra-exposing options.
 - references/platform-traps.md — ROUTER: symptom → topical traps file (below).
 - references/traps-helpers-and-panels.md — helper renames, templating, env quoting, config panels, systemd asymmetries, ynh_restore permissions.
@@ -102,7 +102,7 @@ Indexed by symptom in references/platform-traps.md (router) — helpers/templati
 - references/official-docs.md — all official dev-doc pages indexed + doc-only facts: manifest keys, resources/helpers surface, LDAP table, hooks env vars, dev environments (Incus/LXC/VirtualBox), quality levels + CI mechanics, doc-vs-box contradiction register.
 - references/admin-ops-interface.md — admin-side behaviors a package must survive: backup/restore model (reinstall+reincorporate, core-only), path relocations/bind mounts, SFTP ACLs, permissions/portal, mail relay reality, cert/TLS customs, fail2ban, migrations, blast radius.
 - references/biglybt.md — feasibility probe worked example.
-- templates/example_ynh-snapshot.tar.gz — bootstrap skeleton; scripts/verify_conformance.py — repo conformance audit; scripts/verify_skill_integrity.py — skill self-check (reference resolution both ways + PII patterns as --pii args; invoke with the skill dir as its argument, e.g. `python3 scripts/verify_skill_integrity.py .` from the repo root).
+- templates/example_ynh-snapshot.tar.gz — bootstrap skeleton; scripts/verify_conformance.py — repo conformance audit; scripts/comment_gate.py — proves a comment cleanup changed only comments (code-part + heredoc byte-identity vs a git ref); scripts/verify_skill_integrity.py — skill self-check (reference resolution both ways + PII patterns as --pii args; invoke with the skill dir as its argument, e.g. `python3 scripts/verify_skill_integrity.py .` from the repo root).
 
 ## Skill repo maintenance
 This skill directory is itself a git repo (branch `main`), PUBLISHED at https://github.com/quartztester/ynh-app-packaging-skill (GPLv3; other agents install from its raw SKILL.md URL). Rules:
