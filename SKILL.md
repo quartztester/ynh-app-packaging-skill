@@ -4,7 +4,7 @@ description: "End-to-end rule set for writing, upgrading, debugging, or auditing
 license: GPL-3.0
 compatibility: "Any agentskills.io-compatible agent (Claude Code, OpenCode, Codex CLI, Hermes, Gemini CLI, Cursor, Goose). Needs a reachable YunoHost 12.x box (local or ssh shell), git, python3, and network access to github.com and doc.yunohost.org."
 metadata:
-  version: "2.29.0"
+  version: "2.30.0"
   author: Hermes Agent
   tags: yunohost, packaging, debian, sysadmin
   related-skills: yunohost-server-admin
@@ -102,6 +102,7 @@ Indexed by symptom in references/platform-traps.md (router) — helpers/templati
 - references/benchmarking.md — benchmark THIS skill: fresh with-skill vs baseline packaging runs, rubric calibration against an official repo, live-gate sequencing, judging standard (ecosystem usability, not line-parity); rubric runner: scripts/grade_static.py; ALSO doctrine corpus cross-check — calibrate UX/doc claims against level-8 catalog apps (verify pasted GUIs against current trees).
 - references/official-docs.md — all official dev-doc pages indexed + doc-only facts: manifest keys, resources/helpers surface, LDAP table, hooks env vars, dev environments (Incus/LXC/VirtualBox), quality levels + CI mechanics, doc-vs-box contradiction register.
 - references/admin-ops-interface.md — admin-side behaviors a package must survive: backup/restore model (reinstall+reincorporate, core-only), path relocations/bind mounts, SFTP ACLs, permissions/portal, mail relay reality, cert/TLS customs, fail2ban, migrations, blast radius.
+- references/core-internals-map.md — where implementation truth lives: on-disk installed core (`/usr/lib/python3/dist-packages/yunohost/`) + helpers.v2.1.d as version-matched ground truth; YunoHost org repo map (yunohost src/ restructure, SSOwat access.lua, ynh-tools, apps); function-name-not-line-number citation convention.
 - references/biglybt.md — feasibility probe worked example.
 - templates/example_ynh-snapshot.tar.gz — bootstrap skeleton; scripts/verify_conformance.py — repo conformance audit; scripts/comment_gate.py — proves a comment cleanup changed only comments (code-part + heredoc byte-identity vs a git ref); scripts/verify_skill_integrity.py — skill self-check (reference resolution both ways + PII patterns as --pii args; invoke with the skill dir as its argument, e.g. `python3 scripts/verify_skill_integrity.py .` from the repo root).
 
