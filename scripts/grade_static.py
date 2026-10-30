@@ -147,6 +147,18 @@ def grade(pkg):
                 defined |= set(re.findall(r"^(_?[a-z0-9_]+)\s*\(\)", txt, re.M))
             except Exception:
                 pass
+    # package-local definitions count too: a ynh_-prefixed function
+    # defined in the package's own scripts/_common.sh is callable, not
+    # hallucinated (e.g. i2pd's ynh_check_tcp_port_free)
+    for s in scripts:
+        lext = os.path.splitext(s)[1]
+        if lext and lext != ".sh":
+            continue
+        try:
+            ltxt = open(os.path.join(sdir, s), encoding="utf-8", errors="ignore").read()
+            defined |= set(re.findall(r"^(_?[a-z0-9_]+)\s*\(\)", ltxt, re.M))
+        except Exception:
+            pass
     used, halluc = set(), set()
     for s in scripts:
         txt = open(os.path.join(sdir, s), encoding="utf-8", errors="ignore").read()
@@ -160,7 +172,7 @@ def grade(pkg):
                 halluc.add(call)
     checks.append(check("no-hallucinated-helpers", not halluc,
                         f"hallucinated={sorted(halluc)}" if halluc
-                        else f"all {len(used)} distinct ynh_* calls defined in {HELPERS_DIR}"))
+                        else f"all {len(used)} distinct ynh_* calls defined ({HELPERS_DIR} + package scripts)"))
 
     # 8. core file set (README_fr / _common.sh / change_url are optional even in level-8 repos)
     core = ["manifest.toml", "LICENSE", "README.md",
