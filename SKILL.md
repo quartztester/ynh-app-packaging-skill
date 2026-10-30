@@ -4,7 +4,7 @@ description: "End-to-end rule set for writing, upgrading, debugging, or auditing
 license: GPL-3.0
 compatibility: "Any agentskills.io-compatible agent (Claude Code, OpenCode, Codex CLI, Hermes, Gemini CLI, Cursor, Goose). Needs a reachable YunoHost 12.x box (local or ssh shell), git, python3, and network access to github.com and doc.yunohost.org."
 metadata:
-  version: "2.30.0"
+  version: "2.31.0"
   author: Hermes Agent
   tags: yunohost, packaging, debian, sysadmin
   related-skills: yunohost-server-admin
@@ -84,6 +84,7 @@ Indexed by symptom in references/platform-traps.md (router) — helpers/templati
 
 ## References — read on demand; paths are relative to this skill's directory (Hermes agents: skill_view(name='ynh-app-packaging', file_path='references/…'))
 - CONTRIBUTION.md / CONTRIBUTION_fr.md — human-facing contributor guide for YunoHost packaging (plain-prose doctrine + best practices mined from all 483 active org `_ynh` packages + mandatory `Assisted-by:` AI-disclosure trailer); point humans here, agents follow SKILL.md/references.
+- philosophy.md — the human "why" (long tail, the 2% bargain, availability-over-purity stance); cite it when a decision trades maintenance comfort for community reach.
 - references/quality-gates.md — full When-to-Use/Standard-workflow text, functionality-gate + mail-send-gate mechanics, reinstall gate, multi-instance decision rule, feasibility probe, verbosity audit, reviewer bar, comment-density calibration vs top-50 catalog repos (median 9.7% non-banner).
 - references/ui-questions-panels-docs.md — install-question / config-panel / ADMIN.md UX doctrine (calibrated on 199 catalog level-8 apps, five rounds; scripts + stats in `research/`): standard types need no ask, median 3 questions, permission defaults visitors, bind + services panel idiom, ADMIN.md = 4–24 lines normally, risk-correlated tail to ~124 for infra-exposing options.
 - references/platform-traps.md — ROUTER: symptom → topical traps file (below).
