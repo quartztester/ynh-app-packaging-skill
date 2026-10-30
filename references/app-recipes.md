@@ -3,33 +3,11 @@
 Moved verbatim from SKILL.md on 2026-10-26. App-specific war stories; load only when packaging the named app or its family.
 
 ## YNH 12.1 packaging details verified building anubis_ynh (nginx lua gate + Flask webui + sudo helper, 2026-10-10)
-- **WSGI servers drop underscore headers.** waitress silently discards
-  `YNH_USER` (only RFC token chars). Re-forward in the app's nginx fragment:
-  `proxy_set_header Ynh-User $http_ynh_user;` and read
-  `request.environ["HTTP_YNH_USER"]` in Flask — dashed and underscored names
-  both map to that WSGI key.
-- **`ngx.location.capture` fails inside HTTP/2** ("http2 requests not
-  supported yet" — YunoHost vhosts speak HTTP/2). A pcall-wrapped capture
-  error silently fails gates open. For rewrite-phase gates calling a local
-  service, use `ngx.socket.tcp` cosockets with a hand-rolled minimal HTTP/1.1
-  request; strip CR/LF from header values before sending.
-- **systemd: any seccomp-backed sandbox option implicitly raises
-  NoNewPrivileges** (deb12/systemd-252) — including `PrivateDevices`,
-  `LockPersonality`, `ProtectKernelTunables`, `CapabilityBoundingSet`,
-  `SystemCallFilter`. A service that must sudo a helper cannot use ANY of
-  them (`systemctl show -p NoNewPrivileges` lies — check
-  `/proc/<MainPID>/status`). Safe for sudo-callers: `PrivateTmp`,
-  `DevicePolicy`, `ProtectProc`, `ProtectControlGroups`. `ProtectSystem=full`
-  ro-mounts /etc → breaks helpers writing /etc/nginx/conf.d or settings.yml.
-- **`ynh_config_remove_systemd` takes the service as POSITIONAL arg**
-  (`ynh_config_remove_systemd "$app"`), unlike add which uses `--service=`.
-  Passing `--service=` silently skips removal (garbage unit names).
-- **Anubis specifics**: check API (`/.within.website/x/cmd/anubis/api/check`,
-  requires `X-Real-IP`) answers DENY with HTTP 200 unless the policy sets
-  `status_codes: {CHALLENGE: 401, DENY: 403}` explicitly — ship policy.yaml
-  (mapping form `bots:` + `status_codes:`; the built-in default-config.yaml
-  is a bare list, indent under `bots:`). Gate: 401→307 to
-  `/.within.website/?redir=`, 403→block, else pass (fail-open).
+- **WSGI servers drop underscore headers.** waitress silently discards `YNH_USER` (only RFC token chars). Re-forward in the app's nginx fragment: `proxy_set_header Ynh-User $http_ynh_user;` and read `request.environ["HTTP_YNH_USER"]` in Flask — dashed and underscored names both map to that WSGI key.
+- **`ngx.location.capture` fails inside HTTP/2** ("http2 requests not supported yet" — YunoHost vhosts speak HTTP/2). A pcall-wrapped capture error silently fails gates open. For rewrite-phase gates calling a local service, use `ngx.socket.tcp` cosockets with a hand-rolled minimal HTTP/1.1 request; strip CR/LF from header values before sending.
+- **systemd: any seccomp-backed sandbox option implicitly raises NoNewPrivileges** (deb12/systemd-252) — including `PrivateDevices`, `LockPersonality`, `ProtectKernelTunables`, `CapabilityBoundingSet`, `SystemCallFilter`. A service that must sudo a helper cannot use ANY of them (`systemctl show -p NoNewPrivileges` lies — check `/proc/<MainPID>/status`). Safe for sudo-callers: `PrivateTmp`, `DevicePolicy`, `ProtectProc`, `ProtectControlGroups`. `ProtectSystem=full` ro-mounts /etc → breaks helpers writing /etc/nginx/conf.d or settings.yml.
+- **`ynh_config_remove_systemd` takes the service as POSITIONAL arg** (`ynh_config_remove_systemd "$app"`), unlike add which uses `--service=`. Passing `--service=` silently skips removal (garbage unit names).
+- **Anubis specifics**: check API (`/.within.website/x/cmd/anubis/api/check`, requires `X-Real-IP`) answers DENY with HTTP 200 unless the policy sets `status_codes: {CHALLENGE: 401, DENY: 403}` explicitly — ship policy.yaml (mapping form `bots:` + `status_codes:`; the built-in default-config.yaml is a bare list, indent under `bots:`). Gate: 401→307 to `/.within.website/?redir=`, 403→block, else pass (fail-open).
 - Health-probe the check endpoint with `curl -s -o /dev/null -w %{http_code}` and accept ANY code 100–599 as "serving": DENY/CHALLENGE answers are non-2xx BY DESIGN, so `curl -sf` false-fails a healthy server and rolls back good installs.
 - Local gate tests from the box itself originate at 127.0.0.1, which the shipped private-addresses ALLOW rule passes straight to SSO (302) — to exercise the gate, spoof a public client with `-H "CF-Connecting-IP: 8.8.8.8"` (the package's client-ip map honors it): browser UA → 307 to `/.within.website/`, denied bot UA → 403, unprotected domains unaffected. Testing from the box without the spoof proves nothing about the gate. A protected domain with no app installed still gets gated, then falls through to YunoHost's default vhost / SSO redirect — expected, not a gate bug (the GUI marks such domains 'no vhost yet').
 - GUI policy editing: transcribe validator key lists from upstream's Go config structs (lib/config/config.go, checker.go) so the editor accepts exactly what the binary accepts — including nameless `import:` rule entries and matcher keys like geoip/asns/headers that a naive bots-schema misses.
@@ -127,4 +105,11 @@ Learned building plausible_ynh (native Elixir/OTP + ClickHouse) 2026-10-10; veri
 
 ## listmonk (Go binary + PostgreSQL + SMTP — iteration-8, 2026-10-28)
 - Source: upstream per-arch release BINARIES (sha256 = GitHub API digests, no Go toolchain). v6.2.0 stable while /releases/latest pointed at a v7 beta — enumerate /releases, ship newest non-prerelease (repo-hygiene.md §version-selection). No upstream SSO → app-local admin (last resort) via `--install` + env, YNH admin username, no portal-identity echo; `main` = visitors, `/admin` regex permission pinned to the domain, re-pinned in change_url with ynh_permission_url. Public form posts list UUIDs (`l=<uuid>`), numeric ids 500.
+
+## Tuwunel (Matrix homeserver, conduwuit lineage) — domain + server_name migration
+- `server_name` is BAKED INTO the rocksdb database — the binary refuses to start under a different one ('Database belongs to X; configured server name is Y') — so a server_name change always means a FRESH database. Move the old DB dir aside for recovery (e.g. under /home/yunohost.app/), never delete it; LDAP users re-provision on next login. Check the DB dir's size/mtime BEFORE the move so you know exactly what is being orphaned.
+- Working order: `app setting server_name -v <new>` → arm `overwrite_config=1` (gates the tuwunel.toml re-render) → `app change-url -d <new> -p /` (moves only the domain conf) → pre-render server_name.conf at its new derived path (safety-backup gate, traps-lifecycle.md) → `app upgrade --force` (re-renders toml + deploys well-known) → reset `overwrite_config=0` → rm stale confs + orphan `checksum__` keys → verify.
+- The well-known `server_name.conf` deploys only when `yunohost --output-as plain domain list | grep -q "^$server_name$"` matches — confirm that grep fires before relying on the upgrade to deploy it.
+- Federation behind a Cloudflare-proxied domain needs NO :8448 forward when the well-known delegates to :443 (`m.server: <domain>:443`). Verify `_matrix/client/versions`, `.well-known/matrix/server`, `.well-known/matrix/client`, and `_matrix/federation/v1/version` — all on :443.
+- Cinny client: its rendered config.json is INSTALL-ONLY — cinny's upgrade never re-renders it. Update BOTH the `default_home_server` app setting AND the rendered /var/www/cinny/config.json (homeserverList), then verify the served /config.json and the login-screen prefill.
 - Mail: settings live in the PG `settings` table (JSONB `smtp` + `app.from_email`), NOT config.toml — panel `bind = "settings"` + `ynh_app_config_apply` wrapper syncing settings→DB; seed NO auth and mind the From bounce trap (postfix-integration.md §Outbound).
