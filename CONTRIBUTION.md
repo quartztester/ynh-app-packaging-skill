@@ -55,13 +55,13 @@ compilers. Omitting the trailer on AI-assisted work blocks acceptance here.
 
 Every package: `manifest.toml`, `LICENSE` (100%), `README.md` (99%),
 `scripts/` (flat v2.1 layout: `install remove upgrade backup restore
-change_url config _common.sh`), `conf/` (99%), `tests.toml` (98%),
+change_url config _common.sh`), `conf/` (98%), `tests.toml` (98%),
 `doc/`. Script file modes: 755 for lifecycle scripts, 644 for
 `_common.sh`/`change_url`/`config`.
 
 Docs quality is what separates a reviewable package from a rejected one:
 
-- `doc/DESCRIPTION.md` + `DESCRIPTION_fr.md` (74%) — the catalog renders these,
+- `doc/DESCRIPTION.md` + `DESCRIPTION_fr.md` (75%) — the catalog renders these,
   not your README. 96% of manifests pair the English short description with a
   French one; match that (multi-line feature list, no "self-hosted web app"
   filler).
@@ -82,7 +82,7 @@ Docs quality is what separates a reviewable package from a rejected one:
   package-side change, even with no upstream bump.
 - `helpers_version = "2.1"` in `[integration]` (90% do; the 10% that don't
   silently load the dead 2.0 helpers). Always set it.
-- Install questions stay lean (median 3–4): `domain`, `path` when subpath
+- Install questions stay lean (median 3): `domain`, `path` when subpath
   works, `init_main_permission` (86% ship it) — and think about the default:
   "visitors" for public-facing apps, admins for private tools. Ask only what
   the install cannot decide; 54% of questions carry a default.
@@ -122,10 +122,10 @@ Docs quality is what separates a reviewable package from a rejected one:
 
 ## 6. tests.toml
 
-98% ship it. Good practice from the corpus: keep the `#:schema` line (60%);
+98% ship it. Good practice from the corpus: keep the `#:schema` line (61%);
 add `test_upgrade_from.<commit>` entries from your own repo's history at every
 release (66% have them, and they are what proves upgrades for the store);
-set `[default.args]` for required questions with no default (28%) so CI can
+set `[default.args]` for required questions with no default (29%) so CI can
 install headless; `exclude` scenarios your app legitimately can't serve (16%);
 `curl_tests` (21 repos, growing) let CI assert pages and login behavior.
 

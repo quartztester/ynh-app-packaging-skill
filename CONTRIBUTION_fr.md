@@ -67,7 +67,7 @@ Permissions des scripts : 755 pour les scripts de cycle de vie, 644 pour
 
 La qualité de la documentation distingue le paquet acceptable du paquet rejeté :
 
-- `doc/DESCRIPTION.md` + `DESCRIPTION_fr.md` (74 %) — le catalogue affiche
+- `doc/DESCRIPTION.md` + `DESCRIPTION_fr.md` (75 %) — le catalogue affiche
   ceux-ci, pas votre README. 96 % des manifests accompagnent la description
   courte anglaise d'une traduction française ; faites pareil (liste de
   fonctionnalités multi-lignes, sans remplissage « application web
@@ -89,7 +89,7 @@ La qualité de la documentation distingue le paquet acceptable du paquet rejeté
   incrémentez-le à chaque changement du paquet, même sans changement amont.
 - `helpers_version = "2.1"` dans `[integration]` (90 % le font ; les 10 %
   restants chargent silencieusement les helpers 2.0 morts). Mettez-le toujours.
-- Questions d'installation sobres (médiane 3–4) : `domain`, `path` quand le
+- Questions d'installation sobres (médiane 3) : `domain`, `path` quand le
   sous-chemin fonctionne, `init_main_permission` (86 %) — et réfléchissez à la
   valeur par défaut : « visitors » pour une app publique, admins pour un outil
   privé. Ne demandez que ce que l'installation ne peut pas décider ; 54 % des
@@ -136,10 +136,10 @@ La qualité de la documentation distingue le paquet acceptable du paquet rejeté
 ## 6. tests.toml
 
 98 % le publient. Bonnes pratiques du corpus : gardez la ligne `#:schema`
-(60 %) ; ajoutez des entrées `test_upgrade_from.<commit>` tirées de
+(61 %) ; ajoutez des entrées `test_upgrade_from.<commit>` tirées de
 l'historique du dépôt à chaque publication (66 % en ont, et ce sont elles qui
 prouvent les mises à jour pour la boutique) ; définissez `[default.args]` pour
-les questions obligatoires sans défaut (28 %) afin que la CI installe sans
+les questions obligatoires sans défaut (29 %) afin que la CI installe sans
 intervention ; `exclude` les scénarios légitimement impossibles (16 %) ;
 `curl_tests` (21 dépôts, en croissance) permettent à la CI de vérifier les
 pages et le comportement de connexion.
