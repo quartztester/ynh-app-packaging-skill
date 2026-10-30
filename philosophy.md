@@ -1,48 +1,81 @@
 # Package It Anyway
 
-*A YunoHost packaging creed.*
+*A YunoHost packaging creed — and a defense of the machines that help.*
 
 Docker gives you ten minutes. The eighth month kills you.
 
-Ten minutes: copy the compose file, `up`, and it works — the seduction is real,
-we concede it. Then the certificates expire. The backups silently stop.
-fail2ban isn't watching this one. DNS doesn't resolve. The reverse proxy
-fights the app. Upstream ships a breaking tag. And every one of those boring
-micro-issues is yours, alone, at midnight — because your stack was built for
-the moment of deployment and nobody, **nobody**, optimizes the eighth month.
+Ten minutes: copy the compose file, `up`, it works — the seduction is real, we
+concede it. Then the certificates expire. The backups silently stop. fail2ban
+isn't watching this one. DNS doesn't resolve. Upstream ships a breaking tag.
+Every one of those boring micro-issues is yours, alone, at midnight — because
+the stack was built for the moment of deployment and nobody, **nobody**,
+optimizes the eighth month.
 ([Aleks, YunoHost forum](https://forum.yunohost.org/t/will-yunohost-be-able-to-keep-up-with-all-updates/26739/11))
 
-Aleks, who builds YunoHost, has watched this graveyard fill for years: people
-"get 'tired of maintaining their stuff' and give up." His arithmetic is the
-whole creed — if every person rolling their own stack gave **2% of their time
-to a common one**, "we would live in self-hosting utopia since quite a while."
-Instead they spend three weeks building it alone and eight months regretting
-it. Every per-deployment stack pays the tax alone. A community pays it once.
+## Why the wheel gets remade
 
-A compose file is a private good: it serves one box, dies with its author, and
-carries its pitfalls to the grave. A `_ynh` package is a public good: every
-fix you land becomes infrastructure on every server running it, forever.
-Packaging is not dockerizing with extra steps. It is the decision to stop
-renting your stack and start endowing everyone's.
+Aleks has watched this graveyard fill for years: people "get 'tired of
+maintaining their stuff' and give up." His arithmetic is the whole creed — if
+everyone rolling their own stack gave **2% of their time to a common one**,
+"we would live in self-hosting utopia since quite a while."
+
+But look at *why* the wheel gets remade. Not hubris — an empty shelf.
+Somebody needs their one weird app: the federation tool, the niche dashboard,
+the thing with eleven users worldwide. The common stack doesn't have it yet.
+So they don't join the commons; they hand-roll the entire wheel to get the
+one spoke they wanted — same stack, same pitfalls, solo — and eight months
+later the server goes dark.
+
+The catalog carries the receipt: **515 apps** sit in
+[`wishlist.toml`](https://github.com/YunoHost/apps/blob/master/wishlist.toml)
+— five hundred and fifteen people standing at a door that hasn't been built
+yet. Every unshelved wishlist entry is a future defector to solo
+stack-rolling. The queue *is* the leak.
 
 ## The tail is the point
 
-Kiwix publishes its numbers: Wikipedia — the reason you think you know Kiwix —
-is **15% of downloads**. **60% of downloads aren't in the top 500.** The long
-tail is not the edge of the demand curve. The long tail *is* the demand curve.
+Kiwix publishes its numbers: Wikipedia — the reason you think you know Kiwix
+— is **15% of downloads**. **60% of downloads aren't in the top 500.** The
+long tail is not the edge of the demand curve. It *is* the demand curve.
 ([Our (very) Long Tail](https://hub.kiwix.org/weblog/2024/03/our-very-long-tail/))
 
-Self-hosting has the same shape, and the YunoHost catalog carries the receipt:
-**515 apps** sit in
-[`wishlist.toml`](https://github.com/YunoHost/apps/blob/master/wishlist.toml)
-— five hundred and fifteen people standing at the door, waiting for the one
-weird thing they actually need. Nobody adopts a platform for its top ten
-apps. They adopt it the night they search for the niche app nobody bothered
-to package — and find it installable, with certificates and backups and
+Nobody adopts a platform for its top ten apps. They adopt it the night they
+find their one weird thing installable — with certificates, backups, and
 fail2ban already done. The door is the product; YunoHost's own sentence says
 so — digital services *that you control*, with very little technical
 knowledge. A shelf pruned to what is comfortable to maintain is a shelf that
 quietly stops inviting.
+
+## The bottleneck was never ideology. It was hours.
+
+Packaging is real work: manifest, six lifecycle scripts, nginx conf, systemd
+unit, CI — and upgrades forever after. The shelf exists because hundreds of
+humans donated those hours. But the queue is 515 deep, and human hours do
+not scale to a long tail. That is the honest reason shelves get pruned, why
+"maintenance overhead" becomes a reason to say no, why doors close — not
+from malice, from arithmetic.
+
+## The machine changes the arithmetic
+
+Here is the part you may not want to hear: **AI-assisted packaging is how
+the 2% scales to the tail.**
+
+The format is uniform — one file layout across the whole catalog (2026-10
+audit of all 483 active org packages: same script set, 98% `conf/`, 98%
+`tests.toml`), shared helpers, standard CI. That uniformity is not
+bureaucracy. It is what makes a package machine-writable: the boring 80% —
+scaffolding, manifest fields, the nginx conf, the upgrade path — is
+mechanical, and mechanical work is what machines are for. The judgment stays
+human: real configurations, live-box installs, upgrade proofs, review. One
+maintainer with an agent shelves what one maintainer alone never could.
+
+And the trust problem is already solved, because the catalog already trusts
+machines: quality levels are bot-assigned from CI, and package_check grades
+every package before any human looks at it. If a machine may *judge* every
+package, a machine helping *write* one is not a category change — the gates
+do not care who typed. What the community deserves is honesty, not purity:
+disclose the assistance (the `Assisted-by:` trailer), keep the scripts
+legible to the 3 a.m. human, pin what you ship, test what you ship.
 
 ## The creed of the shelf
 
@@ -68,16 +101,9 @@ whether the imperfection is **shared** — one bug, fixed once, on everyone's
 shelf at once — or **private**, suffered alone until you give up and the
 server goes dark.
 
-And yes, Docker is easier on day one. The answer is not to become Docker. It
-is to make the community's 2% faster — autoupdate, CI gates, shared helpers —
-until pooled maintenance beats private maintenance at its own game.
-
-When you package, remember what you are doing: donating your nights to
-strangers' servers, forever. Pin what you ship. Test what you ship. Leak
-nothing. Disclose your AI. Leave the scripts legible to whoever inherits them
-at 3 a.m.
-
-Give the 2%. Keep every door open. **Package it anyway.**
+So make the 2% faster: autoupdate, CI gates, shared helpers — and agents.
+The queue is 515 long and every human hour is spoken for. Let the machine
+type. You verify. **Package it anyway.**
 
 ---
 
@@ -86,6 +112,7 @@ Give the 2%. Keep every door open. **Package it anyway.**
 - Aleks, [YunoHost forum thread 26739, reply 11](https://forum.yunohost.org/t/will-yunohost-be-able-to-keep-up-with-all-updates/26739/11) (2023-10-15) — the eighth-month list, "tired of maintaining their stuff," the 2% utopia.
 - Kiwix, ["Our (very) Long Tail"](https://hub.kiwix.org/weblog/2024/03/our-very-long-tail/) (2024-03-28) — 15% / 60%.
 - [YunoHost/apps](https://github.com/YunoHost/apps): `apps.toml`, `wishlist.toml`, `graveyard.toml` — 26 flagged / 515 queued / 131 buried (2026-10-30).
+- 483-package corpus audit (2026-10-30): uniform script set, 98% `conf/`, 98% `tests.toml` — the uniformity that makes packages machine-writable.
 - [yunohost.org](https://yunohost.org/) — "digital services (apps) that you control."
 
 ---
@@ -116,5 +143,5 @@ entire commissioning prompt — verbatim:
 > can see my laziness. I don't care here. Lol. Include this section. (Don't
 > include the raw quote here, just the link).
 
-The ideas are the author's. The footwork was outsourced at roughly 100% — which is,
-one might argue, the 2% bargain working as intended.
+The ideas are the author's. The footwork was outsourced at roughly 100% —
+which is, one might argue, the 2% bargain working as intended.
