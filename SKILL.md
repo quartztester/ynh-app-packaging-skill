@@ -4,7 +4,7 @@ description: "End-to-end rule set for writing, upgrading, debugging, or auditing
 license: GPL-3.0
 compatibility: "Any agentskills.io-compatible agent (Claude Code, OpenCode, Codex CLI, Hermes, Gemini CLI, Cursor, Goose). Needs a reachable YunoHost 12.x box (local or ssh shell), git, python3, and network access to github.com and doc.yunohost.org."
 metadata:
-  version: "2.43.1"
+  version: "2.44.0"
   author: Hermes Agent
   tags: yunohost, packaging, debian, sysadmin
   related-skills: yunohost-server-admin
@@ -71,7 +71,7 @@ This skill's Definition of done exists to meet that bar: nothing is called done 
 5d. MULTI_INSTANCE DECLARED RIGHT (quality-gates.md §Multi-instance decision rule): true by default; false only for machine-global resources, reason stated in a manifest comment + ADMIN.md; false packages SELF-GUARD install (YNH 12.1 does not refuse a second copy — official-docs.md §15.6).
 6. REMOVE cleanly: no stale services/sudoers/nginx maps; half-registered apps need the placeholder-unit trick (references/traps-lifecycle.md).
 7. LINTER clean except 'not in catalog', output PASTED into the REPORT (evidence, not assertion). Known shapes: `cpe = "???"` placeholder fails the manifest schema — set a real `cpe:2.3:a:<vendor>:<product>`; 'could not be parsed' lines on multi-line `bash -c` strings are parser noise — live gates arbitrate.
-8. ASSETS + tests.toml: rule-10 set complete; test_upgrade_from entries from the repo's OWN history; `args.<key> = "ci-..."` for required-no-default install questions; every pinned source declares `autoupdate.strategy` (+ per-arch `asset` regex, stable-tag-constrained per repo-hygiene's prerelease trap) — 77% of the top-star catalog ships it (2026-10 audit), it is inert-but-ready in personal repos, and dry-testable with autoupdate_app_sources.py (official-docs.md §autoupdate).
+8. ASSETS + tests.toml: rule-10 set complete; test_upgrade_from entries from the repo's OWN history; `args.<key> = "ci-..."` for required-no-default install questions; every pinned source declares `autoupdate.strategy` (registry-URL sources — e.g. an npm-registry tarball pinned in [resources.sources] — are the sanctioned exception: the autoupdater is gitforge-only, so document the manual url/sha256/version bump procedure in a manifest comment instead) (+ per-arch `asset` regex, stable-tag-constrained per repo-hygiene's prerelease trap) — 77% of the top-star catalog ships it (2026-10 audit), it is inert-but-ready in personal repos, and dry-testable with autoupdate_app_sources.py (official-docs.md §autoupdate).
 9. PRIVACY SWEEP (rule 9) before every push.
 10. REPORT: what passed; what's gated on user approval (pushes); what does NOT survive reinstall documented in doc/ADMIN.md.
 
