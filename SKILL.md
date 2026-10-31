@@ -4,7 +4,7 @@ description: "End-to-end rule set for writing, upgrading, debugging, or auditing
 license: GPL-3.0
 compatibility: "Any agentskills.io-compatible agent (Claude Code, OpenCode, Codex CLI, Hermes, Gemini CLI, Cursor, Goose). Needs a reachable YunoHost 12.x box (local or ssh shell), git, python3, and network access to github.com and doc.yunohost.org."
 metadata:
-  version: "2.38.0"
+  version: "2.39.0"
   author: Hermes Agent
   tags: yunohost, packaging, debian, sysadmin
   related-skills: yunohost-server-admin
@@ -40,8 +40,9 @@ This skill's Definition of done exists to meet that bar: nothing is called done 
 - "Would X be easy to package?" → feasibility probe (references/quality-gates.md): answer from cheap evidence, install nothing.
 - Subdomain-vs-subpath decisions; binding app config to env files.
 - "Make the app log YunoHost users in like forgejo/nextcloud" → research the app's auth backends FIRST (LDAP/OIDC/SAML/trusted-header/local), then wire per references/auth-backend-integration.md — before writing any script.
+- "Open a catalog PR for <app>" → draft procedure (apps.toml entry shape, alphabetical insert, tomllib validation, body modeled on a recent merged `Add X` PR, user-approval gate before submit): references/repo-hygiene.md §Drafting the catalog-addition PR.
 - "Audit my packages / does anything need updating?" → fleet audit of all `$GH_ACCOUNT` _ynh repos vs upstream + the box, read-only (references/upstream-repo-staleness-triage.md).
-- "Test/benchmark/measure this skill itself" (package an app with a fresh agent to score the skill) → references/benchmarking.md: with-skill vs baseline runs, calibrated static rubric (scripts/grade_static.py), parent-run live gates; judged on ecosystem usability, never line-parity with the official package. "Research more level-8 apps / refine the UX doctrine" → corpus cross-check (benchmarking.md §Doctrine-corpus): verify pasted GUI evidence against the app's CURRENT tree, diverse app pool, tomllib stats, fold only contradictions.
+- "Test/benchmark/measure this skill itself" (package an app with a fresh agent to score the skill) → references/benchmarking.md: with-skill vs baseline runs, calibrated static rubric (scripts/grade_static.py), parent-run live gates; judged on ecosystem usability, never line-parity with the official package. User-named "vs the official implementation" benchmarks (single arm, acceptably-similar verdict, hardened no-cheating controls) → benchmarking.md §Similarity mode. "Research more level-8 apps / refine the UX doctrine" → corpus cross-check (benchmarking.md §Doctrine-corpus): verify pasted GUI evidence against the app's CURRENT tree, diverse app pool, tomllib stats, fold only contradictions.
 
 ## Golden rules
 0. ENVIRONMENT GUARD, before any packaging work: the box must be YunoHost 12.x with helpers 2.1 — `yunohost --version` major 12 AND `ls /usr/share/yunohost/helpers.v2.1.d/ >/dev/null`. On mismatch (YNH 13+, helpers ≠ 2.1): STOP — every trap below is validated against that core only; re-audit references/official-docs.md and re-run one covered app's gates before writing scripts here.
