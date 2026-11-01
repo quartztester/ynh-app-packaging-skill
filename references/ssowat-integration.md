@@ -22,10 +22,16 @@ Moved verbatim from SKILL.md on 2026-10-26.
   error-level): the location prefix must end with `/` whenever the alias
   ends with `/` (or the alias path lacks `__INSTALL_DIR__`). An unslashed
   `location /path` + slashed `alias /dir/` lets `/path../../` escape the
-  doc root. Bare `location = /path { return 301 /path/; }` handles the
-  unslashed app URL — exact match can't be prefix-traversed, and CI's
-  validator (lib/curl_tests.py) sets FOLLOWLOCATION=True so the redirect
-  passes. Never serve the bare path with an unslashed prefix+alias pair.
+  doc root. Canonical bare-path handling (example_ynh pattern):
+  `#sub_path_only rewrite ^__PATH__$ __PATH__/ permanent;` above the
+  slashed location — the v2.1 nginx helper strips the `#sub_path_only`
+  marker only when path != / (at root the line stays a comment), so it
+  cannot self-loop at path=/. Do NOT use `location = __PATH__ { return
+  301 __PATH__/; }` — at root it renders `location = / { return 301 /; }`
+  and loops forever (verified live). The regex anchor `^__PATH__$` only
+  matches the bare path (never /path../), and CI's validator
+  (lib/curl_tests.py) sets FOLLOWLOCATION=True plus resolves relative
+  asset URLs against the FINAL (post-redirect) URL, so the 301 passes.
 - Debugging ssowat decisions: `/etc/ssowat/conf.json` accepts
   `"logging": "DEBUG"` (regen overwrites it), then read
   `/var/log/nginx/ssowat.log` — access.lua logs "No permission matching
