@@ -17,9 +17,15 @@ Moved verbatim from SKILL.md on 2026-10-26.
 - Fix: serve the prefix with `alias` instead of root+rewrite — `try_files`
   honours alias on nginx >= 1.7 (bookworm 1.22 verified: assets serve with
   correct content types, `try_files`-last-arg SPA fallback internal-
-  redirects through the same location). Keep the location prefix WITHOUT
-  trailing slash so the bare path matches too (nginx then slash-redirects,
-  301 relative with `absolute_redirect off`).
+  redirects through the same location).
+- TRAVERSAL RULE (linter `Configurations.misc_nginx_path_traversal`,
+  error-level): the location prefix must end with `/` whenever the alias
+  ends with `/` (or the alias path lacks `__INSTALL_DIR__`). An unslashed
+  `location /path` + slashed `alias /dir/` lets `/path../../` escape the
+  doc root. Bare `location = /path { return 301 /path/; }` handles the
+  unslashed app URL — exact match can't be prefix-traversed, and CI's
+  validator (lib/curl_tests.py) sets FOLLOWLOCATION=True so the redirect
+  passes. Never serve the bare path with an unslashed prefix+alias pair.
 - Debugging ssowat decisions: `/etc/ssowat/conf.json` accepts
   `"logging": "DEBUG"` (regen overwrites it), then read
   `/var/log/nginx/ssowat.log` — access.lua logs "No permission matching

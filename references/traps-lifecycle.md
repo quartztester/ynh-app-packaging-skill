@@ -20,6 +20,20 @@ Carved from platform-traps.md 2026-10-27 (router there). What sticks, what rever
   half-moved (settings updated, no nginx conf) — and every later install on
   that domain fails the same way until the dir is recreated. The dir is
   owned by the domain/nginx machinery; removing the conf file is enough.
+- Restore scripts: run web-perm helpers (`chown app:www-data`/`g+rX` on
+  served trees) LAST — a blanket `chown -R app:app $install_dir` after
+  them reverts the group and nginx fails `stat()` with EACCES on every
+  served file; try_files then exhausts candidates and nginx aborts with
+  "rewrite or internal redirection cycle" = HTTP 500 on the WHOLE app
+  (verified live). Match the install script's final ordering.
+- Local package_check global level reads 0 (Broken) whenever the app is
+  NOT in the catalog: the linter's `AppCatalog.is_in_catalog` is CRITICAL
+  and level 1 requires zero criticals. Official CI injects the catalog
+  entry before testing, so it passes there. Read a local run's real verdict
+  from the per-test results + repo-side linter findings
+  (`misc_nginx_path_traversal`, `badges_in_readme`), not the global level
+  line. Display decoding: a level line showing bare `ok` = passed but
+  after a failed level; blank = failed.
 - Text-replacing script regions can partially match and leave ORPHAN lines (an old `[ -n "$var" ] || ynh_die` surviving under a new helper call broke the first plausible production upgrade). After any multi-line replace: grep for variables the deleted code owned, `bash -n` every touched script, and test with a real `yunohost app upgrade <app> -u <local-repo-clone>` when installed (it safety-restores on failure). Prefix `unset PYTHONPATH` or the pre-upgrade safety backup dies on pydantic.
 - Before deleting a 'dead' file, grep the tree for consumers of what it PRODUCES: opengym's 'unused' sso-map.conf template defined nginx var `$opengym_auth` that conf/nginx.conf referenced — deleting the template without the nginx hook breaks every future nginx provisioning. Removing a tool means removing its hooks too (map block in install/upgrade/restore, cleanup in remove, the nginx proxy_set_header, README bullets).
 - Check `yunohost app list` before promising a live upgrade test: the admin uninstalls apps without notice — upgrading a missing app exits harmlessly but validates nothing.
