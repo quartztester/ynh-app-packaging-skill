@@ -2,6 +2,35 @@
 
 Moved verbatim from SKILL.md on 2026-10-26.
 
+## nginx rewrite phase breaks SSOwat prefix matching (verified live, opengym CI parity 2026-11-01)
+- SSOwat's `access_by_lua_file` sits at SERVER level in the domain conf, and
+  nginx runs a location's `rewrite ... break` BEFORE that access phase:
+  access.lua prefix-matches `ngx.var.host..ngx.var.uri` against the public
+  main permission ("domain/path"). A path-stripping rewrite in the app's
+  location makes ssowat see uri "/" on every request → no permission
+  matches → default-deny → anonymous users 302 to the portal even though
+  main is visitors. Symptom signature: portal redirect with `?r=` decoding
+  to the DOMAIN ROOT (back_url is built from the REWRITTEN uri). CI-level
+  symptom: install.subdir / backup_restore / change_url all fail "The
+  request was redirected to yunohost's portal" while install.root passes
+  (at path=/ the rewrite is a no-op, uri stays "/").
+- Fix: serve the prefix with `alias` instead of root+rewrite — `try_files`
+  honours alias on nginx >= 1.7 (bookworm 1.22 verified: assets serve with
+  correct content types, `try_files`-last-arg SPA fallback internal-
+  redirects through the same location). Keep the location prefix WITHOUT
+  trailing slash so the bare path matches too (nginx then slash-redirects,
+  301 relative with `absolute_redirect off`).
+- Debugging ssowat decisions: `/etc/ssowat/conf.json` accepts
+  `"logging": "DEBUG"` (regen overwrites it), then read
+  `/var/log/nginx/ssowat.log` — access.lua logs "No permission matching
+  request for <uri> ... Assuming access is denied" or "Allowing to pass
+  through". A curl that logs NOTHING means the request never reached
+  access.lua.
+- Beware reload races when testing nginx confs: `systemctl reload nginx`
+  returns before workers pick up the new conf — curl immediately after can
+  exercise the OLD conf and mislead the diagnosis (this masked the alias
+  fix working for one full test round). Sleep 1-2s or curl twice.
+
 ## Lua-glue SSO mint verified building opengym_ynh (nginx content_by_lua signing the app's own session cookie, 2026-10-26)
 - lua `s:find(pattern, 1, true)` third arg = PLAIN mode: the pattern is a
   literal substring, so "^Basic " with the caret NEVER matches (silent 401

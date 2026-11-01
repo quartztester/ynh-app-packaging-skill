@@ -3,6 +3,23 @@
 Carved from platform-traps.md 2026-10-27 (router there). What sticks, what reverts, what restore really executes.
 
 ## Editing an existing package safely (lessons from live upgrades):
+- Subsequent ops (change_url/upgrade/remove/config-panel apply) run the
+  scripts from the COPY stored at install time
+  (`/etc/yunohost/apps/<app>/scripts/`), NOT the source folder a
+  `--force` install pointed at. Patching a script in the repo and re-running
+  change_url/upgrade on an existing app exercises the OLD stored script and
+  lies to you (cost a full debugging round on opengym: the "fixed" script
+  never ran). To test script fixes: remove + reinstall (fresh stored copy),
+  or `yunohost app upgrade <app> -u <repo>` which refreshes the archive.
+- NEVER `rmdir` the per-domain nginx conf dir
+  (`/etc/nginx/conf.d/<domain>.d/`) after `ynh_safe_rm`-ing an app conf —
+  it can legitimately be empty when the app is the only one on the domain,
+  but `ynh_config_add_nginx` ASSERTS the base dir exists when writing the
+  new conf. Symptom: change_url crashes "base dir is not a dir" /
+  `touch: cannot touch ...conf: No such file or directory`, leaving the app
+  half-moved (settings updated, no nginx conf) — and every later install on
+  that domain fails the same way until the dir is recreated. The dir is
+  owned by the domain/nginx machinery; removing the conf file is enough.
 - Text-replacing script regions can partially match and leave ORPHAN lines (an old `[ -n "$var" ] || ynh_die` surviving under a new helper call broke the first plausible production upgrade). After any multi-line replace: grep for variables the deleted code owned, `bash -n` every touched script, and test with a real `yunohost app upgrade <app> -u <local-repo-clone>` when installed (it safety-restores on failure). Prefix `unset PYTHONPATH` or the pre-upgrade safety backup dies on pydantic.
 - Before deleting a 'dead' file, grep the tree for consumers of what it PRODUCES: opengym's 'unused' sso-map.conf template defined nginx var `$opengym_auth` that conf/nginx.conf referenced — deleting the template without the nginx hook breaks every future nginx provisioning. Removing a tool means removing its hooks too (map block in install/upgrade/restore, cleanup in remove, the nginx proxy_set_header, README bullets).
 - Check `yunohost app list` before promising a live upgrade test: the admin uninstalls apps without notice — upgrading a missing app exits harmlessly but validates nothing.
