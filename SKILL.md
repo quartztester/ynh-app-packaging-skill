@@ -4,7 +4,7 @@ description: "End-to-end rule set for writing, upgrading, debugging, or auditing
 license: GPL-3.0
 compatibility: "Any agentskills.io-compatible agent (Claude Code, OpenCode, Codex CLI, Hermes, Gemini CLI, Cursor, Goose). Needs a reachable YunoHost 12.x box (local or ssh shell), git, python3, and network access to github.com and doc.yunohost.org."
 metadata:
-  version: "2.48.2"
+  version: "2.48.3"
   author: Hermes Agent
   tags: yunohost, packaging, debian, sysadmin
   related-skills: yunohost-server-admin
@@ -21,9 +21,10 @@ Lean rule set. Gate mechanics, trap detail and per-app recipes live in reference
 - `COMMIT_AUTHOR` — noreply commit identity, `<id>+<login>@users.noreply.github.com` shape (default `91350035+quartztester@users.noreply.github.com`)
 
 ## Required companion skills — activate BEFORE writing any package code
-Caveman + ponytail MUST be active for the whole packaging session — they are what stops an unfamiliar model from writing verbose scripts, speculative settings, and comment walls (Golden rule 7 is enforced through them). If either is missing from the environment, download it first (raw files verified live 2026-10):
+Caveman + ponytail MUST be active for the whole packaging session — they are what stops an unfamiliar model from writing verbose scripts, speculative settings, and comment walls (Golden rule 7 is enforced through them). The `github` skill (gh CLI: PR lifecycle, releases, repo ops) is required for every PUBLISH step — rule 8 and gate 8b's PR/`!testme`/release flow assume its discipline (read full context before writing, verify remote state with fresh `gh` reads, REST PATCH when GraphQL deprecations break porcelain). If either caveman or ponytail is missing from the environment, download it first (raw files verified live 2026-10):
 - ponytail — lazy-senior-dev mode, smallest change that fully solves the task: `https://raw.githubusercontent.com/DietrichGebert/ponytail/main/skills/ponytail/SKILL.md` (repo https://github.com/DietrichGebert/ponytail)
 - caveman — terse-output mode, all technical substance kept: `https://raw.githubusercontent.com/JuliusBrussee/caveman/main/skills/caveman/SKILL.md` (repo https://github.com/JuliusBrussee/caveman)
+- github — gh CLI end-to-end (issues, PR workflow, code review, releases); bundled with Hermes (`software-development/github`) — on other agents use the `gh` CLI directly and keep its core rules: `gh auth status` preflight, `gh pr view --comments` before writing, never claim green/merged without a fresh read.
 
 Install = put each file at `<skills-dir>/<skill-name>/SKILL.md` (curl the raw URL or clone the companion repo; the target dir name must equal the skill name). Hermes: the skill `fetching-external-skills` automates this. Then load/activate both. Only if the environment truly cannot fetch skills, proceed anyway but hold every script/config/doc to the lean bar manually: no speculative code, no comment walls, smallest diff that works — verbosity is a defect, not a style choice.
 
