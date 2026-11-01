@@ -14,7 +14,8 @@ CEILING = 0.15
 MIN_LINES = 10
 MAX_RUN = 6
 VENDORED = ["conf/nova3/*", "conf/nova3/**", "*nova2dl.py", "*novaprinter.py",
-            "conf/webui/templates/*", "conf/redis.conf"]
+            "conf/webui/templates/*", "conf/redis.conf",
+            "conf/i2pd.conf", "conf/tunnels.conf", "scripts/contrib/*"]
 
 SCAN_DIRS = ("conf", "scripts")
 SCAN_FILES = ("manifest.toml", "tests.toml", "config_panel.toml")
