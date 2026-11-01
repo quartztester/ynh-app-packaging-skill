@@ -13,18 +13,31 @@ import fnmatch, os, re, sys
 CEILING = 0.15
 MIN_LINES = 10
 MAX_RUN = 6
-VENDORED = ["conf/nova3/*", "conf/nova3/**", "*nova2dl.py", "*novaprinter.py"]
+VENDORED = ["conf/nova3/*", "conf/nova3/**", "*nova2dl.py", "*novaprinter.py",
+            "conf/webui/templates/*", "conf/redis.conf"]
 
 SCAN_DIRS = ("conf", "scripts")
 SCAN_FILES = ("manifest.toml", "tests.toml", "config_panel.toml")
 COMMENT = re.compile(r"^\s*#(?!#!)")
+# Standard YunoHost template furniture, mandated by repo-hygiene's banner
+# rule — exempt from the density/run budget so the two rules agree:
+#   - banner rule lines:  #============...====#
+#   - ALL-CAPS section titles inside banner blocks (short, no lowercase)
+BANNER_RULE = re.compile(r"^\s*#=+\s*$")
+ALL_CAPS_TITLE = re.compile(r"^\s*#\s*[A-Z0-9][A-Z0-9 \-/&.]{2,70}\s*$")
+
+def is_exempt_comment(l):
+    return bool(BANNER_RULE.match(l) or ALL_CAPS_TITLE.match(l))
 
 def scan(path, rel):
     lines = open(path, encoding="utf-8", errors="replace").readlines()
     total = run = best = comments = 0
     for l in lines:
         if COMMENT.match(l):
-            comments += 1; run += 1; best = max(best, run)
+            if is_exempt_comment(l):
+                pass  # banner furniture: not prose, not counted, run-neutral
+            else:
+                comments += 1; run += 1; best = max(best, run)
         elif l.strip() == "":
             pass  # blank keeps a block visually together but not counted
         else:
