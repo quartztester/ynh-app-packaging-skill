@@ -51,3 +51,9 @@ When the app needs a Python newer than Debian's (Django 6 wants ≥3.13; Debian 
 - Manifest `[install.admin_key] type = "password"` question; store in app settings so config panel/restore can re-render env. Help text must tell the user how to read it back (`yunohost app setting <app> admin_key`).
 - Double-lock model: portal gates the key-management API prefixes; the app's own key guards its dashboard. Tell the user in install output + README which prefix is portal-gated.
 - Rate-limit/IP awareness: behind nginx always set `proxy_set_header X-Forwarded-For $remote_addr` (overwrite, not append) for apps that trust XFF — client-forged chains get stripped; CF-fronted domains additionally get CF-Connecting-IP which most apps read first anyway.
+
+## GUI-app containers (webtop/selkies family): probe before declaring infeasible
+- For `linuxserver/docker-<app>`-style desktop images, read the Dockerfile via raw.githubusercontent and the file list via `api.github.com/repos/<repo>/git/trees/<branch>?recursive=1` FIRST: these repos often ship only the upstream AppImage/deb extracted to /opt plus launcher scripts — the real machinery lives in the base image (compositor + WebRTC/VNC browser streaming + s6), not in app-specific code.
+- Consequence: the app is NOT docker-only — pin the upstream binary via `ynh_setup_source` (AppImage → `--appimage-extract` into `$install_dir`), apt-install the Electron GUI deps (`libgtk-3-0 libnss3 libatk-bridge2.0`). The packaging work is the streaming layer, not the app.
+- Minimal native streaming stack, all stock Debian: xvfb + x11vnc + noVNC/websockify, nginx with websocket upgrade, ssowat in front (VNC password in app settings). Latency worse than WebRTC but fine for text apps; chasing GPU-parity WebRTC stacks (Selkies/KasmVNC) natively is not worth the fragility.
+- Flag BEFORE investing: these containers expose ONE shared desktop session — YunoHost multi-user collapses into a single shared app instance/vault.
