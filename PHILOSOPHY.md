@@ -59,8 +59,9 @@ every server running the package, forever.
 ## Hours were the ceiling. Agents are the lever.
 
 Packaging is real work, and human hours do not scale to a 515-deep queue.
-But the format is uniform (one file layout across all 483 active packages,
-98% `conf/`, 98% `tests.toml`; catalog audit, October 2026), which is what
+But the format is uniform (one file layout across all 712 catalog-listed
+packages, 100% `conf/`, 100% `tests.toml`; catalog audit, November 2026),
+which is what
 makes a package machine-writable. The boring 80% is mechanical; judgment
 stays human. The catalog already trusts machines, since quality levels are
 bot-assigned from CI and package_check grades every package before a human
@@ -100,8 +101,8 @@ Label, don't delete. Let the machine type; you verify. Give the 2%.
 - Kiwix, ["Our (very) Long Tail"](https://hub.kiwix.org/weblog/2024/03/our-very-long-tail/) (2024-03-28) — 15% / 60%.
 - Aleks, [YunoHost forum thread 26739, reply 11](https://forum.yunohost.org/t/will-yunohost-be-able-to-keep-up-with-all-updates/26739/11) (2023-10-15) — "tired of maintaining their stuff," the 2% utopia.
 - Carol Rose, "The Comedy of the Commons," 53 U. Chi. L. Rev. 711 (1986).
-- [YunoHost/apps](https://github.com/YunoHost/apps): `apps.toml`, `wishlist.toml`, `graveyard.toml` — 26 / 515 / 131 (2026-10-30).
-- 483-package corpus audit (2026-10-30): uniform script set, 98% `conf/`, 98% `tests.toml`.
+- [YunoHost/apps](https://github.com/YunoHost/apps): `apps.toml`, `wishlist.toml`, `graveyard.toml` — 26 notworking / 515 / 131 (2026-11-02; `apps.toml` holds 727 entries).
+- 712-repo catalog corpus audit (2026-11-02): uniform script set, 100% `conf/`, 100% `tests.toml`.
 
 ---
 

@@ -4,8 +4,9 @@ A human-facing guide for contributing `_ynh` packages — to the
 [YunoHost-Apps](https://github.com/YunoHost-Apps) organization, to a personal
 package, or to an existing one. It restates in plain prose what the
 machine-readable packaging doctrine enforces, and adds best practices mined
-(October 2026) from the **483 active `_ynh` packages** in the YunoHost-Apps
-org, sorted by stars. Percentages below are measured on that corpus.
+from a full re-audit (November 2026) of the **712 `_ynh` repos listed in the
+[YunoHost/apps catalog](https://github.com/YunoHost/apps)** (`apps.toml`,
+727 entries). Percentages below are measured on that corpus.
 
 ## 1. You are the contributor of record
 
@@ -53,44 +54,47 @@ compilers. Omitting the trailer on AI-assisted work blocks acceptance here.
 
 ## 3. Anatomy of a package (what the corpus actually ships)
 
-Every package: `manifest.toml`, `LICENSE` (100%), `README.md` (99%),
+Every package: `manifest.toml` (100%), `LICENSE` (100%), `README.md` (100%),
 `scripts/` (flat v2.1 layout: `install remove upgrade backup restore
-change_url config _common.sh`), `conf/` (98%), `tests.toml` (98%),
-`doc/`. Script file modes: 755 for lifecycle scripts, 644 for
+change_url config _common.sh`), `conf/` (100%), `tests.toml` (100%),
+`doc/` (100%). Script file modes: 755 for lifecycle scripts, 644 for
 `_common.sh`/`change_url`/`config`.
 
 Docs quality is what separates a reviewable package from a rejected one:
 
-- `doc/DESCRIPTION.md` + `DESCRIPTION_fr.md` (75%) — the catalog renders these,
-  not your README. 96% of manifests pair the English short description with a
-  French one; match that (multi-line feature list, no "self-hosted web app"
-  filler).
-- `doc/screenshots/*.png` (66%) and embedded in the README (80% of READMEs
+- `doc/DESCRIPTION.md` (100%) + `DESCRIPTION_fr.md` (81%) — the catalog
+  renders these, not your README. 96% of manifests pair the English
+  description with a French one; match that (multi-line feature list, no
+  "self-hosted web app" filler).
+- `doc/screenshots/*.png` (92%) and embedded in the README (82% of READMEs
   embed them) — official upstream assets first, live captures second.
-- `doc/ADMIN.md` (49%, median **9 lines**) — only what an admin can trip on:
+- `doc/ADMIN.md` (44%, median **9 lines**) — only what an admin can trip on:
   first-login steps, risky options, what doesn't survive reinstall. Short and
   real beats long and generic.
-- Version-gated migration notes go in `doc/PRE_UPGRADE.d/<version>.md` (17%)
+- Version-gated migration notes go in `doc/PRE_UPGRADE.d/<version>.md` (16%)
   — run by the upgrade only when crossing that version; the right home for
   breaking-upstream-changes warnings.
 
 ## 4. Manifest best practices
 
-- `[upstream]` block: 99% ship it — `license` (100%), `code` (95%), `website`
-  (83%), `admindoc` (68%), `demo` (51%), `fund` if you care about donations.
-- `version = "1.2.3~ynh1"` (99%): the `~ynh` suffix is yours — bump it on every
+- `[upstream]` block: 100% ship it — `license` (100%), `code` (98%),
+  `website` (77%), `admindoc` (65%), `demo` (49%), `fund` (18%) if you care
+  about donations.
+- `version = "1.2.3~ynh1"` (100%): the `~ynh` suffix is yours — bump it on every
   package-side change, even with no upstream bump.
-- `helpers_version = "2.1"` in `[integration]` (90% do; the 10% that don't
-  silently load the dead 2.0 helpers). Always set it.
+- `helpers_version = "2.1"` in `[integration]` (95% do; the rest silently
+  load the dead 2.0 helpers). Always set it. Helpers 2.1 is current on both
+  YunoHost 12 and 13 (the 13 core still ships `helpers.v2.1.d`).
 - Install questions stay lean (median 3): `domain`, `path` when subpath
-  works, `init_main_permission` (86% ship it) — and think about the default:
+  works, `init_main_permission` (88% ship it) — and think about the default:
   "visitors" for public-facing apps, admins for private tools. Ask only what
-  the install cannot decide; 54% of questions carry a default.
+  the install cannot decide; 53% of questions carry a default.
 - `[resources.sources]`: pin `url` + `sha256` (per-arch `amd64.url`/
-  `amd64.sha256` sub-tables), and add `autoupdate` — **88% of the corpus
-  declares an update strategy** (`latest_github_release`/`latest_github_tag`,
-  per-arch `asset` regex). It keeps the catalog bot opening version-bump PRs.
-  Constrain it to stable tags (`version_regex`) so a beta is never auto-shipped.
+  `amd64.sha256` sub-tables), and add `autoupdate` — **87% of repos with
+  pinned sources declare an update strategy** (`latest_github_release`/
+  `latest_github_tag`, per-arch `asset` regex). It keeps the catalog bot
+  opening version-bump PRs. Constrain it to stable tags (`version_regex`) so
+  a beta is never auto-shipped.
 - `integration.multi_instance`: true by default (72% of the catalog). False is
   legitimate only for machine-global state (fixed protocol ports, system
   hooks) — say why in a comment, and self-guard the install against a second
@@ -99,21 +103,21 @@ Docs quality is what separates a reviewable package from a rejected one:
 ## 5. Script best practices (v2.1 idioms, corpus frequency)
 
 - Render config with `ynh_config_add` (+`_fail2ban`, `_logrotate`, `_systemd`)
-  from templates in `conf/` — 351/483 use it; config files in `conf/`, not
-  heredocs in scripts (only 9% inline heredocs).
-- `ynh_systemctl` to manage services (434) — no raw `systemctl` in scripts.
+  from templates in `conf/` — 95% use it; config files in `conf/`, not
+  heredocs in scripts (only 4% have any heredoc left).
+- `ynh_systemctl` to manage services (94%) — no raw `systemctl` in scripts.
 - Secrets: create once with `ynh_app_setting_set_default --key=x
-  --value=$(ynh_string_random)` (129) and re-render config from settings;
+  --value=$(ynh_string_random)` (27%) and re-render config from settings;
   never regenerate a secret on upgrade/restore.
-- Run as the app user with `ynh_exec_as_app` (183).
-- Clean up with `ynh_safe_rm` (234).
+- Run as the app user with `ynh_exec_as_app` (39%).
+- Clean up with `ynh_safe_rm` (45%).
 - Databases: dump in `backup` with `ynh_mysql_dump_db` / `ynh_psql_dump_db`,
   restore with the matching helper; also archive the settings/scripts dir
   (backup copies `scripts/` via the `../settings/scripts/_common.sh`
   Keep-comment pattern).
 - **Do not copy these from older repos** — dead v2.0 helpers still present in
-  the corpus: `ynh_add_config` (42 repos), `ynh_secure_remove` (37),
-  `ynh_use_logrotate` (19), `ynh_permission_update` (8). Verify every `ynh_*`
+  the corpus: `ynh_add_config` (35 repos), `ynh_secure_remove` (30),
+  `ynh_use_logrotate` (14), `ynh_permission_update` (4). Verify every `ynh_*`
   call against `/usr/share/yunohost/helpers.v2.1.d/` on a real box.
 - Comments: lean. One-line capability labels and why-traps with a link; no
   tutorial prose. A reviewer must follow each script top-to-bottom in one read.
@@ -122,12 +126,12 @@ Docs quality is what separates a reviewable package from a rejected one:
 
 ## 6. tests.toml
 
-98% ship it. Good practice from the corpus: keep the `#:schema` line (61%);
+100% ship it. Good practice from the corpus: keep the `#:schema` line (73%);
 add `test_upgrade_from.<commit>` entries from your own repo's history at every
-release (66% have them, and they are what proves upgrades for the store);
-set `[default.args]` for required questions with no default (29%) so CI can
-install headless; `exclude` scenarios your app legitimately can't serve (16%);
-`curl_tests` (21 repos, growing) let CI assert pages and login behavior.
+release (61% have them, and they are what proves upgrades for the store);
+set `[default.args]` for required questions with no default (63%) so CI can
+install headless; `exclude` scenarios your app legitimately can't serve (19%);
+`curl_tests` (36 repos, growing) let CI assert pages and login behavior.
 
 ## 7. Submitting to the catalog
 

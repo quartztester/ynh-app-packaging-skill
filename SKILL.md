@@ -4,7 +4,7 @@ description: "End-to-end rule set for writing, upgrading, debugging, or auditing
 license: GPL-3.0
 compatibility: "Any agentskills.io-compatible agent (Claude Code, OpenCode, Codex CLI, Hermes, Gemini CLI, Cursor, Goose). Needs a reachable YunoHost 12.x box (local or ssh shell), git, python3, and network access to github.com and doc.yunohost.org."
 metadata:
-  version: "2.49.1"
+  version: "2.50.0"
   author: Hermes Agent
   tags: yunohost, packaging, debian, sysadmin
   related-skills: yunohost-server-admin
@@ -87,7 +87,7 @@ This skill's Definition of done exists to meet that bar: nothing is called done 
 Indexed by symptom in references/platform-traps.md (router) — helpers/templating/panels in traps-helpers-and-panels.md, durability/backup/restore in traps-lifecycle.md, build-stacks/app-code in traps-build-and-appcode.md, box-ops/driving-yunohost in traps-box-and-ops.md. Load the one that matches the failure, not all four.
 
 ## References — read on demand; paths are relative to this skill's directory (Hermes agents: skill_view(name='ynh-app-packaging', file_path='references/…'))
-- CONTRIBUTION.md / CONTRIBUTION_fr.md — human-facing contributor guide for YunoHost packaging (plain-prose doctrine + best practices mined from all 483 active org `_ynh` packages + mandatory `Assisted-by:` AI-disclosure trailer); point humans here, agents follow SKILL.md/references.
+- CONTRIBUTION.md / CONTRIBUTION_fr.md — human-facing contributor guide for YunoHost packaging (plain-prose doctrine + best practices mined from all 712 catalog-listed org `_ynh` repos, re-audited 2026-11-02 + mandatory `Assisted-by:` AI-disclosure trailer); point humans here, agents follow SKILL.md/references.
 - STRATEGY.md — the two-front strategy: stable apps for durability vs new/upcoming apps for traction (higher breakage risk, pin harder).
 - PHILOSOPHY.md — the human "why" (long tail, the 2% bargain, availability-over-purity stance); cite it when a decision trades maintenance comfort for community reach.
 - references/quality-gates.md — full When-to-Use/Standard-workflow text, functionality-gate + mail-send-gate mechanics, reinstall gate, multi-instance decision rule, feasibility probe, verbosity audit, reviewer bar, comment-density calibration vs top-50 catalog repos (median 9.7% non-banner).
