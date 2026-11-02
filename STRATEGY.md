@@ -24,6 +24,28 @@ Front 1 buys the future; Front 2 gets noticed this year. When the two
 compete for an hour, Front 1 keeps the doors working — and broken doors cost
 more than missing ones.
 
+## The third front — the world finds out
+
+A package nobody knows about installs nobody. Every catalog addition is a
+visibility event for the whole platform, and it is wasted the moment it
+merges silently. AI-assisted packaging buys hours; those hours are spent on
+the announcement, not on packaging one more app. The volume AI enables is
+only ever volume *after* the quality gates — a shipped slop package costs
+the platform more trust than a missing one (levels ≤4 get hidden and
+frozen), and the announcement list is what keeps that honest: you only
+announce what you would defend in front of the upstream maintainer.
+
+When a package lands in the catalog:
+- Post the announcement thread on the YunoHost forum — that is where
+  adoption actually starts.
+- Tell the upstream project their app is installable on YunoHost. Their
+  link back is the only SEO that compounds.
+- One screenshot or short demo GIF. Nobody shares a manifest.
+- Social post where the app's community actually lives.
+
+Front 1 keeps the doors working. Front 2 gives the world a reason to look.
+This front is the one that makes them see it.
+
 ---
 
 ## Appendix: the raw prompt
@@ -40,3 +62,9 @@ Verbatim, laziness included:
 > Make it extremely short and read the philosophy.md for reference
 >
 > Include my raw prompt in the doc
+
+Second commissioning prompt, verbatim (2026-11-02, the third front):
+
+> On my yunohost packaging skill - on my strategy.md. The use of AI is meant
+> to add seo to the platform and not over slop everything. If a new package
+> is added, I'd like to world to know.
