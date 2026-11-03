@@ -1,60 +1,139 @@
 #!/usr/bin/env python3
-"""comment cleanup check (rule 7b) — flag comment-heavy package files.
+"""comment cleanup check (rule 7b) — flag comment-heavy or narration-heavy files.
 
 Usage: comment_cleanup.py <repo> [<repo>...]
-Exit 1 if any file is flagged. Flags:
+Exit 1 if any file is flagged. Two layers (density + semantics):
+
+Density budget:
   - comment density > 15% of file lines (min 10 comment lines), or
-  - any consecutive comment run >= 6 lines
-Vendored upstream files are exempt (rule 7b: never trim them) — maintained
-as VENDORED globs below; extend per-repo as discovered.
+  - any consecutive prose run >= 6 lines
+
+Semantic gauntlet (runs regardless of density; adapted from
+https://gist.github.com/bavanws/123e0343f8a79cec825d9141124a0a83 —
+comment earns its place only by carrying WHY):
+  - prose run >= 3 lines (multi-line blocks almost never survive intact)
+  - change narration ("fixed X", "updated to Y", "added per Z") — commit-msg
+    content, not file content
+  - moving-target pointers ("spec section 7", "see the design doc") —
+    encode the substance instead; issue IDs and stable doc paths are fine
+
+Keep categories (never flagged, per the gist): cross-file sync pointers
+("keep in sync with X"), data-literal semantics, format contracts,
+structural banners (#=== title ===), TODO/FIXME markers.
+
+Comment syntax per file type: # (sh/toml/conf/env), -- (lua),
+// (mjs/js/jsx), <!-- --> (html). Files whose syntax the scanner does
+not know are skipped, never guessed.
+
+Vendored upstream files are exempt (rule 7b: never trim them).
 """
 import fnmatch, os, re, sys
 
 CEILING = 0.15
 MIN_LINES = 10
 MAX_RUN = 6
+PROSE_RUN = 3
+
 VENDORED = ["conf/nova3/*", "conf/nova3/**", "*nova2dl.py", "*novaprinter.py",
             "conf/webui/templates/*", "conf/redis.conf",
             "conf/i2pd.conf", "conf/tunnels.conf", "scripts/contrib/*"]
 
 SCAN_DIRS = ("conf", "scripts")
 SCAN_FILES = ("manifest.toml", "tests.toml", "config_panel.toml")
-COMMENT = re.compile(r"^\s*#(?!#!)")
-# Standard YunoHost template furniture, mandated by repo-hygiene's banner
-# rule — exempt from the density/run budget so the two rules agree:
-#   - banner rule lines:  #============...====#
-#   - ALL-CAPS section titles inside banner blocks (short, no lowercase)
-BANNER_RULE = re.compile(r"^\s*#=+\s*$")
+
+# syntaxes: (line-comment regex, applies-to suffixes); html handled separately
+SYNTAXES = [
+    (re.compile(r"^\s*#(?!#!)"), ("", "sh", "toml", "conf", "env", "service", "ini", "py", "yml", "yaml", "nginx")),
+    (re.compile(r"^\s*--(?!-)"), ("lua",)),
+    (re.compile(r"^\s*//"), ("js", "mjs", "jsx", "ts")),
+]
+HTML = ("html", "htm")
+
+# standard YunoHost template furniture (banner rule, repo-hygiene.md)
+BANNER_RULE = re.compile(r"^\s*[#=+]+\s*$")
 ALL_CAPS_TITLE = re.compile(r"^\s*#\s*[A-Z0-9][A-Z0-9 \-/&.]{2,70}\s*$")
 
-def is_exempt_comment(l):
-    return bool(BANNER_RULE.match(l) or ALL_CAPS_TITLE.match(l))
+# keep categories (gist): the link/convention itself is the why
+KEEP = re.compile(
+    r"keep in sync|same logic as|mirrors? the|must not clash|"
+    r"matches the API default|pence|units?|portrait|TODO|FIXME|FIXME")
+# change narration addressed to a diff reviewer, not a file reader
+CHANGE_NARRATION = re.compile(
+    r"^(fixed|updated to|removed the|added per|as requested|"
+    r"per feedback|changed to use|now uses)\b", re.I)
+# moving-target references (issue IDs and stable paths are fine)
+MOVING_TARGET = re.compile(
+    r"(spec|requirements? doc|design doc)\s*(§|section)?\s*\d|\bsection \d+\.\d+\b", re.I)
 
-def scan(path, rel):
-    lines = open(path, encoding="utf-8", errors="replace").readlines()
-    total = run = best = comments = 0
+def syntax_for(path):
+    ext = path.rsplit(".", 1)[-1].lower() if "." in path else ""
+    for rx, exts in SYNTAXES:
+        if ext in exts:
+            return rx
+    return None
+
+def scan(path):
+    """Return (reasons, comment_count, total_lines)."""
+    rx = syntax_for(path)
+    ext = path.rsplit(".", 1)[-1].lower() if "." in path else ""
+    if rx is None and ext not in HTML:
+        return [], 0, 0  # unknown syntax: skip, never guess
+    try:
+        lines = open(path, encoding="utf-8", errors="replace").read().splitlines()
+    except OSError:
+        return [], 0, 0
+    total = len(lines)
+    comments, prose = 0, 0
+    wrapped_runs, run, cur = [], 0, []
+    def flush():
+        if run >= PROSE_RUN:
+            # wrapped-paragraph signature: a continuation line starting
+            # lowercase, or a line ending mid-sentence (comma/hyphen)
+            body = [l.strip().lstrip("#-/< !").strip() for l in cur]
+            wrapped = any(b[:1].islower() for b in body[1:]) or \
+                      any(b.rstrip().endswith((",", "-", ";")) for b in body[:-1])
+            if wrapped:
+                wrapped_runs.append(run)
     for l in lines:
-        if COMMENT.match(l):
-            if is_exempt_comment(l):
-                pass  # banner furniture: not prose, not counted, run-neutral
-            else:
-                comments += 1; run += 1; best = max(best, run)
-        elif l.strip() == "":
-            pass  # blank keeps a block visually together but not counted
+        is_banner = BANNER_RULE.match(l) or ALL_CAPS_TITLE.match(l)
+        if is_banner:
+            continue            # banner furniture: not prose, run-neutral
+        if l.strip() == "":
+            continue            # blank keeps blocks together, run-neutral
+        if (ext in HTML and ("<!--" in l or "-->" in l or l.strip().startswith("<"))) or (rx and rx.match(l)):
+            comments += 1; run += 1; cur.append(l)
+            if not KEEP.search(l):
+                prose += 1
         else:
-            run = 0
-        total += 1
-    dens = comments / max(total, 1)
+            flush(); run = 0; cur = []
+    flush()
+    # second pass: semantic flags on non-keep comment lines
+    sem = []
+    cl = [l for l in lines if (rx and rx.match(l) and not BANNER_RULE.match(l) and not ALL_CAPS_TITLE.match(l))]
+    if ext in HTML:
+        cl = [l.strip() for l in lines if l.strip().startswith("<!--")]
+    for l in cl:
+        if KEEP.search(l):
+            continue
+        if CHANGE_NARRATION.match(l.strip().lstrip("#-/< !")):
+            sem.append("change narration"); break
+    for l in cl:
+        if KEEP.search(l):
+            continue
+        if MOVING_TARGET.search(l):
+            sem.append("moving-target pointer"); break
+
     reasons = []
-    if comments >= MIN_LINES and dens > CEILING:
+    dens = prose / max(total, 1)
+    if prose >= MIN_LINES and dens > CEILING:
         reasons.append(f"density {dens:.0%} > {CEILING:.0%}")
-    if best >= MAX_RUN:
-        reasons.append(f"longest run {best} >= {MAX_RUN}")
+    if wrapped_runs:
+        reasons.append(f"wrapped prose run {max(wrapped_runs)} >= {PROSE_RUN}")
+    reasons += sem
     return reasons, comments, total
 
 def check_repo(repo):
     repo = repo.rstrip("/")
-    flagged = []
     targets = [os.path.join(repo, f) for f in SCAN_FILES if os.path.exists(os.path.join(repo, f))]
     for d in SCAN_DIRS:
         base = os.path.join(repo, d)
@@ -62,18 +141,16 @@ def check_repo(repo):
             continue
         for root, _, files in os.walk(base):
             targets += [os.path.join(root, f) for f in files]
+    flagged = []
     for p in sorted(targets):
         rel = os.path.relpath(p, repo)
         if any(fnmatch.fnmatch(rel, v) or fnmatch.fnmatch(os.path.basename(rel), v) for v in VENDORED):
             continue
         if os.path.islink(p) or not os.path.isfile(p):
             continue
-        try:
-            reasons, c, n = scan(p, rel)
-        except (OSError, UnicodeDecodeError):
-            continue
+        reasons, c, n = scan(p)
         if reasons:
-            flagged.append((rel, "; ".join(reasons), c, n))
+            flagged.append((rel, "; ".join(dict.fromkeys(reasons)), c, n))
     return flagged
 
 def main():
