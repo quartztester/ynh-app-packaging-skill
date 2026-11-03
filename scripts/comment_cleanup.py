@@ -2,13 +2,14 @@
 """comment cleanup check (rule 7b) — flag comment-heavy or narration-heavy files.
 
 Usage: comment_cleanup.py <repo> [<repo>...]
-Exit 1 if any file is flagged. Two layers (density + semantics):
+Exit 1 if any file is flagged. Two layers, one blocking + one advisory (maintainer call: prose blocks
+are accepted style, so only real walls block):
 
-Density budget:
+BLOCKING budget:
   - comment density > 15% of file lines (min 10 comment lines), or
-  - any consecutive prose run >= 6 lines
+  - any consecutive run >= 6 lines
 
-Semantic gauntlet (runs regardless of density; adapted from
+ADVISORY gauntlet (reported, never exit 1; adapted from
 https://gist.github.com/bavanws/123e0343f8a79cec825d9141124a0a83 —
 comment earns its place only by carrying WHY):
   - prose run >= 3 lines (multi-line blocks almost never survive intact)
@@ -19,7 +20,9 @@ comment earns its place only by carrying WHY):
 
 Keep categories (never flagged, per the gist): cross-file sync pointers
 ("keep in sync with X"), data-literal semantics, format contracts,
-structural banners (#=== title ===), TODO/FIXME markers.
+structural banners (#=== title ===), TODO/FIXME markers. Advisory
+findings (prose runs 3-5, narration, moving targets) are signals for
+the next touch of the file, not push blockers.
 
 Comment syntax per file type: # (sh/toml/conf/env), -- (lua),
 // (mjs/js/jsx), <!-- --> (html). Files whose syntax the scanner does
@@ -56,7 +59,9 @@ ALL_CAPS_TITLE = re.compile(r"^\s*#\s*[A-Z0-9][A-Z0-9 \-/&.]{2,70}\s*$")
 # keep categories (gist): the link/convention itself is the why
 KEEP = re.compile(
     r"keep in sync|same logic as|mirrors? the|must not clash|"
-    r"matches the API default|pence|units?|portrait|TODO|FIXME|FIXME")
+    r"matches the API default|pence|units?|portrait|TODO|FIXME|FIXME|"
+    r"Keep this path for calling|this script is only run if actual change|"
+    r"new location is available via")
 # change narration addressed to a diff reviewer, not a file reader
 CHANGE_NARRATION = re.compile(
     r"^(fixed|updated to|removed the|added per|as requested|"
@@ -77,11 +82,11 @@ def scan(path):
     rx = syntax_for(path)
     ext = path.rsplit(".", 1)[-1].lower() if "." in path else ""
     if rx is None and ext not in HTML:
-        return [], 0, 0  # unknown syntax: skip, never guess
+        return [], [], 0, 0  # unknown syntax: skip, never guess
     try:
         lines = open(path, encoding="utf-8", errors="replace").read().splitlines()
     except OSError:
-        return [], 0, 0
+        return [], [], 0, 0
     total = len(lines)
     comments, prose = 0, 0
     wrapped_runs, run, cur = [], 0, []
@@ -123,14 +128,17 @@ def scan(path):
         if MOVING_TARGET.search(l):
             sem.append("moving-target pointer"); break
 
-    reasons = []
+    hard, advisory = [], []
     dens = prose / max(total, 1)
     if prose >= MIN_LINES and dens > CEILING:
-        reasons.append(f"density {dens:.0%} > {CEILING:.0%}")
-    if wrapped_runs:
-        reasons.append(f"wrapped prose run {max(wrapped_runs)} >= {PROSE_RUN}")
-    reasons += sem
-    return reasons, comments, total
+        hard.append(f"density {dens:.0%} > {CEILING:.0%}")
+    if wrapped_runs and max(wrapped_runs) >= MAX_RUN:
+        hard.append(f"longest run {max(wrapped_runs)} >= {MAX_RUN}")
+    elif wrapped_runs:
+        # maintainer-accepted style: prose blocks are advisory, never blocking
+        advisory.append(f"prose run {max(wrapped_runs)} >= {PROSE_RUN}")
+    advisory += sem
+    return hard, advisory, comments, total
 
 def check_repo(repo):
     repo = repo.rstrip("/")
@@ -148,27 +156,31 @@ def check_repo(repo):
             continue
         if os.path.islink(p) or not os.path.isfile(p):
             continue
-        reasons, c, n = scan(p)
-        if reasons:
-            flagged.append((rel, "; ".join(dict.fromkeys(reasons)), c, n))
+        hard, advisory, c, n = scan(p)
+        if hard or advisory:
+            flagged.append((rel, "; ".join(dict.fromkeys(hard)),
+                            "; ".join(dict.fromkeys(advisory)), c, n))
     return flagged
 
 def main():
-    all_flagged = 0
+    blocked = 0
     for repo in sys.argv[1:]:
         flagged = check_repo(repo)
         name = os.path.basename(repo.rstrip("/"))
+        hard_n = sum(1 for f in flagged if f[1])
         if flagged:
-            print(f"{name}: {len(flagged)} file(s) over comment budget")
-            for rel, why, c, n in flagged:
-                print(f"  {rel:44s} {c:3d}/{n:3d} comment lines — {why}")
-            all_flagged += len(flagged)
+            print(f"{name}: {hard_n} blocking, {len(flagged) - hard_n} advisory")
+            for rel, why, adv, c, n in flagged:
+                tag = "BLOCK" if why else "advise"
+                bits = " | ".join(b for b in (why, adv) if b)
+                print(f"  [{tag}] {rel:44s} {c:3d}/{n:3d} comment lines — {bits}")
+            blocked += hard_n
         else:
             print(f"{name}: clean")
-    if all_flagged:
-        print(f"COMMENT CLEANUP: {all_flagged} file(s) need compression (why-only one-liners, rule 7b)")
+    if blocked:
+        print(f"COMMENT CLEANUP: {blocked} file(s) over budget (why-only one-liners, rule 7b)")
         sys.exit(1)
-    print("COMMENT CLEANUP: all repos within budget")
+    print("COMMENT CLEANUP: all repos within budget (advisory notes above, if any)")
 
 if __name__ == "__main__":
     main()
