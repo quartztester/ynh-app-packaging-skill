@@ -1,6 +1,6 @@
 # ynh-app-packaging
 
-[![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](LICENSE)
+[![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](LICENSE)
 
 Rules for packaging a native [YunoHost](https://yunohost.org) 12 app, short
 enough for a human to read and precise enough for an agent to follow.
@@ -66,4 +66,4 @@ the skill is missing. See `CONTRIBUTION.md`.
 
 ## License
 
-GPLv3 — see [LICENSE](LICENSE).
+AGPLv3 — see [LICENSE](LICENSE).

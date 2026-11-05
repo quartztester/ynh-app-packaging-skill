@@ -1,10 +1,10 @@
 ---
 name: ynh-app-packaging
 description: "Package, repair or audit a YunoHost 12 app package (_ynh): manifest, install/upgrade/backup/restore/change_url scripts, SSO, mail, config panels, catalog submission. Bootstrap every package from a FRESH clone of YunoHost/example_ynh, verify with the official CI, fix whatever fails. Use for any task touching a YunoHost app package. Native packaging only — no Docker/Kubernetes/LXC/VM as the app's runtime mechanism; helpers 2.1."
-license: GPL-3.0
+license: AGPL-3.0
 compatibility: "Any agentskills.io-compatible agent. Needs a reachable YunoHost 12.x box (local or ssh), git, python3, and network access to github.com."
 metadata:
-  version: "3.1.4"
+  version: "3.1.5"
   author: Hermes Agent
   tags: yunohost, packaging, debian, sysadmin
 ---
@@ -60,7 +60,7 @@ One failing test at a time: read the per-test log, fix the cause in the repo (ne
 7. **Comments: one line of WHY, or none.** Density under ~15% with no run of 6+ lines; `scripts/comment_cleanup.py <repo>` exits 1 above that. A why that needs a paragraph belongs in `doc/`, not in the script.
 8. **Nothing leaks.** No names, emails, domains, usernames, IPs or box inventories in files, images or history — 3-layer audit before every push: references/repo-hygiene.md.
 9. **Publish as `$GH_ACCOUNT`:** PAT from `$GH_TOKEN_FILE` (never in a remote URL), author `$COMMIT_AUTHOR`, repo `<upstream-name>_ynh`, tag `v<version>-ynh<N>` verified on the remote, sources as release assets. Changes to an already published repo: verify on the box, commit, then wait for explicit user approval before pushing.
-10. **Ship the catalog set:** real `doc/screenshots/*.png` embedded in README+README_fr, square RGBA logo ≥180px with transparent corners, DESCRIPTION/ADMIN (+fr), canonical GPL-3.0 LICENSE text, modes 755 for lifecycle scripts and 644 for `_common.sh`/`change_url`/`config`. Sourcing ladder and presentation rules: references/repo-hygiene.md.
+10. **Ship the catalog set:** real `doc/screenshots/*.png` embedded in README+README_fr, square RGBA logo ≥180px with transparent corners, DESCRIPTION/ADMIN (+fr), canonical AGPL-3.0 LICENSE text, modes 755 for lifecycle scripts and 644 for `_common.sh`/`change_url`/`config`. Sourcing ladder and presentation rules: references/repo-hygiene.md.
 11. **Mail goes through the box's Postfix** when the app sends email: `127.0.0.1:25`, plaintext, no auth, never an external provider; From must be a domain the relay accepts (`app@<install-domain>` by default). Prove it with a real send and a `status=sent` in mail.log: references/postfix-integration.md §Outbound.
 
 ## Checks CI cannot make (do these on a live box)
