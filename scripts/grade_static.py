@@ -7,7 +7,7 @@ Emits JSON: per-check pass/fail + evidence, scored vs informational totals.
 Calibrated against a level-8 official catalog repo, which scores ~19/21 —
 it fails only catalog-presentation checks (description bullet format, in-repo
 logo) that are intentional discriminators (this skill's rule 10 exceeds
-common official practice). See references/benchmarking.md for the procedure
+common official practice). See references/workflow.md §Auditing an existing repo for the procedure
 and the v2-manifest false-fail traps encoded below. PII patterns are passed
 as --pii args — nothing personal is baked into this public-bound script.
 """
@@ -396,7 +396,7 @@ def grade(pkg):
     # 19. multi-instance declaration (v2: integration.multi_instance)
     # true passes; false passes ONLY with a stated reason (comment on the
     # manifest key, or a single/multi-instance note in doc/ADMIN.md or README)
-    # — decision rule: references/quality-gates.md §Multi-instance
+    # — decision rule: references/workflow.md §Multi-instance
     mi = get(manifest, "integration.multi_instance")
     if mi is True:
         checks.append(check("multi-instance-declared", True, "integration.multi_instance=true"))
@@ -421,7 +421,7 @@ def grade(pkg):
         if mi is False:
             checks.append(check("multi-instance-declared", reason,
                                 "false WITH stated reason" if reason else
-                                "multi_instance=false WITHOUT stated reason — add a comment on the manifest key or a single-instance note in doc/ADMIN.md (quality-gates.md §Multi-instance)"))
+                                "multi_instance=false WITHOUT stated reason — add a comment on the manifest key or a single-instance note in doc/ADMIN.md (workflow.md §Multi-instance)"))
         else:
             checks.append(check("multi-instance-declared", False,
                                 f"integration.multi_instance={mi} — must be true, or false with a stated reason"))

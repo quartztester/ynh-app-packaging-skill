@@ -1,6 +1,6 @@
 # Build-stack and app-code traps (ynh-app-packaging)
 
-Carved from platform-traps.md 2026-10-27 (router there). Compile-time toolchain failures and app-level behavior bugs (auth, demo modes, throttles, mail flags) that only surface at runtime.
+Compile-time toolchain failures and app-level behavior bugs (auth, demo modes, throttles, mail flags) that only surface at runtime.
 
 ## JS build toolchains: engine pins, patch generation, scratch repro
 - npm 11 ENFORCES `engines`/`devEngines` (`onFail: error`) against the node and npm actually running. Upstreams pin exact tool versions (e.g. npm `"11.16.0"`) that the nodejs resource's bundled npm doesn't match → EBADDEVENGINES kills `npm ci`/`npm run` mid-build. The pin lives in FOUR files per workspace (package.json `engines` + `devEngines.packageManager.version`, package-lock.json root `engines`), and monorepos duplicate the set across sibling workspaces (vue/ + hocuspocus/ style): grep the extracted tree for the exact pin BEFORE patching — fixing only the file named in the error leaves a sibling dying three commands later. Relax exact → caret (`"^11.16.0"`) so the newer bundled tool passes; ship as `patches/<source_id>/`.

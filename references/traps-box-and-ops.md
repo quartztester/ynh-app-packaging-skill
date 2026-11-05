@@ -1,6 +1,6 @@
 # This-box and yunohost-ops discipline (ynh-app-packaging)
 
-Carved from platform-traps.md 2026-10-27 (router there). How to DRIVE yunohost operations safely (installs, locks, PTYs, op logs) and this server's quirks (nginx, DNS, locks). Applies when testing packages on the live box.
+How to DRIVE yunohost operations safely (installs, locks, PTYs, op logs) and this server's quirks (nginx, DNS, locks). Applies when testing packages on the live box.
 
 ## Running yunohost operations (agent discipline)
 - Agent-side secret auto-redaction falsifies auth gates (Hermes-class runtimes, 2026-10): the runtime silently rewrites `password=<literal>` / `-u user:pass` patterns in EXECUTED commands (not just display), so inline-curl login tests fail 401 against a perfectly good credential and files written via such commands contain `***`. Never conclude "app auth is broken" from inline login tests: pass secrets at runtime (argv `python3 - "$VAR"`, `@file` whose content never appeared literally in a command, env expansion) and byte-check (`wc -c`, `cat -A`) before believing any negative.

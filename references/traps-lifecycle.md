@@ -1,6 +1,6 @@
 # Lifecycle traps: install/upgrade/backup/restore/remove durability (ynh-app-packaging)
 
-Carved from platform-traps.md 2026-10-27 (router there). What sticks, what reverts, what restore really executes.
+What sticks, what reverts, what restore really executes.
 
 ## Editing an existing package safely (lessons from live upgrades):
 - Subsequent ops (change_url/upgrade/remove/config-panel apply) run the
@@ -54,7 +54,7 @@ THE RULES:
 1. NO LIVE-ONLY FIXES. A fix made directly on the box (app source, rendered /etc config, nginx conf, unit file, helper bin) is UNPROVISIONED until it exists in the repo AND has been landed by a real `yunohost app upgrade -u <clone>`. Same session, same commit — otherwise the next upgrade or restore silently reverts it and the fix is indistinguishable from "never worked".
 2. Every fix goes into its durable home: app-code patch → fork upstream + pin fork tarball in `[resources.sources]` (or upstream PR), NEVER sed on installed files; config fix → conf/ template; runtime env fix → env template re-rendered from settings; new runtime file (helper, sudoers, ACL, log dir, browsers dir) → provisioned by a shared `_common.sh` function called from install AND upgrade AND restore; live-state repair (db row, chown, re-pin) → idempotent repair function on the same three paths. The upgrade script must be a strict superset of install's provisioning steps — "it worked at install time" provisions nothing for the next version.
 3. `--keep` is the ONLY sanctioned mutable file set inside $install_dir (app-written sqlite, secrets the app mints itself). Data belongs in $data_dir instead whenever the app lets you point it there — $data_dir is backed up; $install_dir is disposable by design.
-4. THREE-PATH CONVERGENCE GATE, before reporting any package/change done: (a) same-version `yunohost app upgrade -u <clone>` TWICE in a row — this is what catches scripts that only pass on fresh installs (missing mkdir/chown/re-render is invisible to install); (b) after the double upgrade, re-run the basic-functionality gate (references/quality-gates.md §0a), not just rc=0; (c) backup → remove → restore round-trip, because restore executes the ARCHIVED scripts against a re-created $install_dir — the one path that proves the durability claims.
+4. THREE-PATH CONVERGENCE GATE, before reporting any package/change done: (a) same-version `yunohost app upgrade -u <clone>` TWICE in a row — this is what catches scripts that only pass on fresh installs (missing mkdir/chown/re-render is invisible to install); (b) after the double upgrade, re-run the basic-functionality gate (references/workflow.md §Local checks), not just rc=0; (c) backup → remove → restore round-trip, because restore executes the ARCHIVED scripts against a re-created $install_dir — the one path that proves the durability claims.
 5. State what does NOT survive in doc/ADMIN.md for every non-package-owned mutable thing (permission group edits, logo pins, user hand-edits to app configs that the package manages): the admin must be able to reinstall without losing their setup by following the doc alone.
 
 ## Native source patches: patches/<source_id>/*.patch (built-in durability for app-code fixes)

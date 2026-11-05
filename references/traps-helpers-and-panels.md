@@ -1,6 +1,6 @@
 # Helpers v2.1 / templating / config-panel traps (ynh-app-packaging)
 
-Carved from platform-traps.md 2026-10-27 (router there). Script-writing bugs: helper names, template rendering, config panels, systemd helpers. Verify names against /usr/share/yunohost/helpers.v2.1.d/.
+Script-writing bugs: helper names, template rendering, config panels, systemd helpers. Verify names against /usr/share/yunohost/helpers.v2.1.d/.
 
 ## Helpers: v2.1 names differ from 2.0 docs
 - Helpers are NEVER shipped in the package: scripts only `source /usr/share/yunohost/helpers` (ships with YunoHost core, included in every example_ynh script). YunoHost exports YNH_HELPERS_VERSION itself = manifest `[integration].helpers_version`, falling back to packaging_format — so WITHOUT the explicit `helpers_version = "2.1"` pin a packaging_format=2 app silently loads the OLD helpers.v2.d (ynh_add_config etc.). The current example_ynh template carries the pin; keep it when editing manifest.toml.

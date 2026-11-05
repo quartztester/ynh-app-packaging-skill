@@ -1,5 +1,15 @@
 # Per-app packaging recipes — verified builds (ynh-app-packaging)
 
+## Flarum 2.0 (YunoHost-Apps)
+- LDAP login needs the Flarum-2 fork `yippy/flarum-ext-auth-ldap` (settings model is ONE JSON key `<extid>.domains`, array of domain objects, seed via SQL, MEMBER group id 3) — `tituspijean/flarum-ext-auth-ldap` (^1.0) is dead. Composer 1→2 mechanics: traps-build-and-appcode.md.
+- `config.php` `driver` MUST be `mariadb`: Flarum 2 gates JSON SQL dialect by driver name and MariaDB rejects `CAST(? AS JSON)` (500 db_error on posting). Set it in the install template AND rewrite the kept config.php on upgrade.
+- change_url must `flarum cache:clear` after rewriting config.php (compiled state caches the base URL); remove must `ynh_del_swap` (ynh_add_swap leaves `/swap_$app`, fstab entry and the .swap unit).
+
+## BiglyBT (feasibility probe, not built)
+- Upstream ships `BiglyBT_unix.tar.gz` — ~50 MB, arch-independent single tree, no bundled JRE (packaging shape = pinned JRE + one source, no build step); the URL is rolling-latest, so mirror it as a release asset to pin.
+- Control surface is AZMP (JSON-RPC, off by default, own user/pass). Its web UI plugin powers BiglySoft's HOSTED front-ends only — not self-hostable. No trusted-header hook, so expect a login page behind the portal, not SSO walk-in.
+- Sonarr/Radarr have no native client: glue is an azexec post-download hook or an AZMP↔Transmission-RPC shim. Where arr-facing BitTorrent is all that's wanted, qbittorrent_ynh/deluge_ynh already exist.
+
 Moved verbatim from SKILL.md on 2026-10-26. App-specific war stories; load only when packaging the named app or its family.
 
 ## YNH 12.1 packaging details verified building anubis_ynh (nginx lua gate + Flask webui + sudo helper, 2026-10-10)
