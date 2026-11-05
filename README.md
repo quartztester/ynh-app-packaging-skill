@@ -2,7 +2,7 @@
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](LICENSE)
 
-A lean, gate-enforced rule set that walks an AI agent — or a human — through packaging a native YunoHost 12 app, from `manifest.toml` to catalog submission, with every rule learned from live install/upgrade/backup/restore cycles rather than documentation alone.
+A short, workflow-first rule set that walks an AI agent — or a human — through packaging a native YunoHost 12 app, from `manifest.toml` to catalog submission, with every rule learned from live install/upgrade/backup/restore cycles rather than documentation alone.
 
 ## Why this exists
 
@@ -12,13 +12,15 @@ It grew out of ~30 real packaging cycles (anubis, remark42, forgejo, gitea, umam
 
 ## What you get
 
-- Golden rules and a Definition of done with hard gates: real install, browser functionality check, anonymous/protected endpoint matrix, config-panel round-trip, backup → remove → restore with a data canary, upgrade ×2, change_url move, package_linter clean
-- A UX doctrine for install questions, config panels, and admin docs, calibrated against 199 catalog level-8 apps
+- A five-step workflow with the official CI as the feedback loop: bootstrap from a fresh `example_ynh` clone, package, verify locally with the same harness the CI runs (`package_check`), push and read the CI's per-test summary, fix what fails, repeat
+- The rules that actually break a package (helpers 2.1 pin, native-only runtime, SSO wiring, upgrade durability, secrets, comments, PII, publishing)
+- The checks CI cannot make: browser functionality, anonymous/protected endpoint matrix, config-panel round-trip, backup → remove → restore canary, change_url move, mail send
+- A UX doctrine for install questions, config panels, admin docs and shipped admin GUIs, calibrated against 199 catalog level-8 apps
 - A trap catalog covering helpers v2.1 renames, env quoting, panel getter poisoning, ssowat regex anchoring, build-stack version pins, upgrade durability, Postfix mail wiring
 - A two-layer comment gate (blocking density budget + advisory semantic gauntlet, adapted from [this gist](https://gist.github.com/bavanws/123e0343f8a79cec825d9141124a0a83)) with syntax-aware scanning (`#`, `--`, `//`, `<!-- -->`) so lua/js/html files can't pass blind
 - An SSO-first auth decision tree (LDAP / OIDC / SAML / trusted-header / local)
 - Scripts: conformance audit (detects hallucinated helper calls), the comment gate, a comment-only-diff prover, the PII sweep, a static grader, skill self-check
-- A snapshot of `example_ynh` to bootstrap every package from the official template
+- No vendored template: every package starts from a fresh `git clone` of [YunoHost/example_ynh](https://github.com/YunoHost/example_ynh), so the skill cannot go stale
 
 ## Using it
 
@@ -53,11 +55,11 @@ This skill's gates exist to make that bar reachable: nothing is called done unti
 
 ## Repository layout
 
-- `SKILL.md` — the rule set; start here
-- `references/` — 20 topical files: traps, gates, UX doctrine, per-app recipes, official-docs index
-- `research/` — the level-8 UX calibration corpus: methodology, round selections, reusable scripts (`research/README.md`)
+- `SKILL.md` — the workflow and the rules; start here
+- `references/` — 16 topical files, loaded on demand: `workflow.md` (lifecycle + CI mechanics), trap catalogs by symptom, UX doctrine, repo hygiene, official-docs index, per-app recipes
 - `scripts/` — `verify_conformance.py`, `comment_cleanup.py`, `comment_gate.py`, `pii_gate.sh`, `grade_static.py`, `verify_skill_integrity.py`
-- `templates/` — `example_ynh-snapshot.tar.gz` bootstrap skeleton
+- `docs/research/` — provenance for the UX doctrine (level-8 calibration corpus, reusable scripts): human reference, not part of the agent's load path
+- `CONTRIBUTION.md` / `CONTRIBUTION_fr.md` — the human contributor guide
 
 ## Contributing
 

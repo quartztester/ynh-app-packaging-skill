@@ -1,0 +1,66 @@
+# Workflow, checks and CI — the mechanics behind SKILL.md
+
+Read the section you are on. Everything here was proven on a live box or in a real CI run; dates and incident ids are dropped on purpose.
+
+## Bootstrap (step 1)
+- Fresh clone every time: `git clone --depth 1 https://github.com/YunoHost/example_ynh` — never a vendored snapshot, never an old package's layout. The template and helper conventions move; a months-old copy is a bug source.
+- Start a new package by COPYING the clone (except `.git`) into `<app>_ynh` and `git init` there. Do not fork example_ynh.
+- Existing package: diff it against the fresh clone and adopt every missing template file (`README_fr.md`, `doc/*`, `.github/`, `tests.toml`, `.gitignore`, `.editorconfig`).
+- Standards are re-fetched, not recalled: https://doc.yunohost.org/en/dev/packaging (indexed in references/official-docs.md) and the helper names in `/usr/share/yunohost/helpers.v2.1.d/`. Any upstream default you cite (port, path, URL) comes from a pristine on-disk artifact — a remembered-but-wrong default is how a "fix" lands on the sibling app's port.
+
+## Smoke-test upstream (optional, cheap, step 2)
+Run the app once outside YunoHost on a scratch port with throwaway creds and exercise login + the core API with curl. It settles routes, env vars and required services before you design anything. Delete scratch state afterwards.
+
+## Local checks on the box, in this order
+- **Install** as a background job: `unset PYTHONPATH; yunohost app install <dir> -a "domain=<d>&path=/<p>&init_main_permission=<g>" --force` (ampersand-joined, keys exactly as in the manifest). Add `--no-remove-on-failure` when you expect to autopsy.
+- **Functionality gate** — "install green + endpoints 200" is NOT done. In a real browser with a real portal login (throwaway user, deleted after): perform the app's PRIMARY WRITE action, confirm the result renders after reload, watch ~15 s for bounce loops between app root and login. A token-mint 200 is not proof of auth — the next authed request is where header clobbering shows.
+- **Static serving** — anonymous 302s to the portal MASK 403/404, so prove nginx itself serves the built output: `namei -l <served index.html>` (traverse bit on every dir) and `sudo -u www-data head -c 1 <served index.html>`. Build output created 0750 by the build user 403s every authed visit while anon tests look green — chmod `o+rX` the served dir in every script that builds (install/upgrade/restore).
+- **Endpoint matrix** — from `/etc/ssowat/conf.json` (python + json: per permission uris/users/auth_header), cookie-less curls only: every `visitors` URI answers without a 302 to the portal (200/204/405-by-design all fine, never a redirect), every protected URI answers 302/401. `re:` URIs are the classic silent failure — `re:^/` never matches host+path.
+- **Config panel round-trip** — get → set (`-a "k=v&k=v"`, short setting names) → get, asserting on the RENDERED FILE's content: the CLI exit code lies. Settings-bound panels need a `ynh_app_config_apply` override that re-renders files.
+- **Backup → remove → restore** — canary (a DB row plus a panel change) created immediately before the backup, asserted after restore, then re-run the functionality gate. After any repo fix: upgrade first (refresh the archived scripts), THEN make a new backup, THEN test restore.
+- **Upgrade ×2** — same-version `yunohost app upgrade <app> -u <clone> -F` twice, then the functionality gate. The second pass is what catches fresh-install-only scripts.
+- **change_url move** — relocate the live install once: `yunohost app change_url <app> -d <domain> -p /<newpath>`, or for full-domain apps a second registered domain (`yunohost domain add <d>` first; self-signed cert until `yunohost domain cert install <d> --no-checks` and DNS resolve). Then endpoint matrix + functionality gate + a pre-move canary, and move back. Permission URIs move via the `ynh_permission_url` HELPER — `user_permission_update(url=…)` does not exist in YNH 12 and dies mid-script after app-side URLs were already rewritten. Write app-side absolute-URL updates LAST. An app that truly cannot move: exclude the `change_url` test id in `tests.toml`, document the limit in `doc/ADMIN.md`, and prove the backup → remove → reinstall → restore fallback instead.
+- **Reinstall** — plain `remove` (data dir retained) → fresh install → functionality gate + a data-dir canary from before the remove. Catches stale units/users/nginx maps from a dirty remove and install scripts assuming an empty data dir. For `multi_instance = false` this is the only second-install proof (CI skips `install.multi` then).
+- **Remove** — no stale services, sudoers or nginx maps left; a half-registered app needs the placeholder-unit trick (references/traps-lifecycle.md).
+- **Linter** — `package_linter.py` clean except "not in catalog", and paste its output into the report: running it is an assertion, the ✔/✘ lines are evidence. `cpe = "???"` is a real schema failure — set a real `cpe:2.3:a:<vendor>:<product>`. "could not be parsed" on multi-line `bash -c` strings is parser noise; the live run arbitrates.
+- **tests.toml + sources** — `test_upgrade_from` entries from the repo's own tag history; `args.<key> = "ci-…"` for required questions with no default; every pinned source declares `autoupdate.strategy` (+ per-arch `asset` regex constrained to stable tags). Registry-URL sources are the sanctioned exception — document the manual bump in a manifest comment.
+
+## PostgreSQL
+`[resources.apt] packages = ["postgresql"]` — the DatabaseAppResource provisions db and user only and never installs the server; a PG app relying on the resource alone dies on a stock box. MariaDB needs no pin (core dependency).
+
+## Multi-instance decision rule
+- Default TRUE: helpers suffix dirs/users/dbs with `$app`; a second install becomes `app__2`. Site-per-install apps are always true.
+- FALSE only for a machine-global resource the suffix cannot isolate: kernel/network state (VPN, tunnels), protocol-fixed ports peers hardcode (53, 5222/5269, 3478, 51820, 1935, DLNA, BitTorrent), mail-stack hooks, system-state mutation (firewall, monitoring, backup target, containers), hardware binding. State the reason in a manifest comment AND `doc/ADMIN.md` — `grade_static.py` fails false-without-reason. "Nobody installs two" is not a reason.
+- YNH 12.1 does NOT enforce the flag at install: a second copy runs over unsuffixed global state and clobbers the first. A false package must SELF-GUARD — fail fast when the resource is already claimed — and must pass the reinstall check.
+
+## Local package_check (step 3) — the same harness the official CI runs
+- Setup: `lynx jq btrfs-progs` + Incus from `pkgs.zabbly.com/incus/lts-6.0`, `usermod -aG incus-admin <user>`, then run everything via `sg incus-admin -c '…'`; btrfs loop pool + `incusbr0` bridge preseeded. Tune ARCH/DIST/YNH_BRANCH in the package_check folder's `config`.
+- Run: `YNHDEV_BACKEND=incus ./package_check.sh <path-to-app_ynh>` in the background (~25–30 min). `-D` dry-run first prints the exact JSON matrix — compare it with the CI job's test list.
+- Artifacts: `full_log_<N>.log` and `summary_<N>.png` (the same png CI posts). Not `Test_results.log`.
+- Traps that cost real time: first launch may die "Can't find base image …" because package_check greps a DASHED alias while the registry serves SLASHED paths — fix once with `incus image copy yunohost:yunohost/<dist>/<branch>/appci local: --alias <expected-alias>` (never `--rebuild`). On a YunoHost host the nftables firewall (`policy drop`, INPUT) silently eats DHCP from `incusbr0` (container keeps IPv6 link-local only): add an `iifname "incusbr0" accept` rule plus a MASQUERADE rule in `/etc/nftables.d/incus.conf`, which survives regen-conf. Docker coexistence is fine.
+
+## Official CI (step 4)
+- Matrix comes from the manifest + `tests.toml`: install.root, install.subdir, install.nourl, install.multi, backup_restore, upgrade.<commit>, change_url — it EXECUTES the lifecycle scripts, which is why local hand-runs stop being the priority once it is green.
+- Dev CI fires on PR comments (`!testme`), and only on YunoHost-Apps org repos: personal-repo PRs get nothing, so pre-transfer the local package_check is the same matrix.
+- Publishing flow once local green: branch off `origin/testing`, cherry-pick your fix commits (disjoint files apply clean), push the branch straight to the org repo and `gh pr create --base testing --head <branch>` as a same-repo PR — a repo TRANSFERRED into the org has no fork link, so `--head <you>:<branch>` fails. Without write access, push to your fork first, confirm its HEAD sha, then `gh pr create -R <org>/<repo>`.
+- Body follows the repo's PULL_REQUEST_TEMPLATE (Problem → root cause, Solution → per fix, the checkboxes, the CI boilerplate verbatim). Then comment `!testme` as its OWN comment: the bot replies and posts bookworm + trixie badges that end in per-test summaries, and that public history is the transparency reviewers rely on — local green never substitutes for it.
+- Never force-push over the bot's "Auto-update READMEs" commits; ff-merge them.
+- VERIFY the PR exists before reporting it: re-read the URL `gh pr create` printed (`gh pr view <n>`), and confirm the `!testme` comment drew badges.
+
+## Verdicts — what counts as green
+Green is the COMPLETED run's final per-test summary. A run killed by timeout (rc=124) or still running has no verdict, and counting FAIL markers in a truncated log is a false green. Equally, a mid-log SUCCESS banner is not the verdict — per-test banners appear throughout a healthy run.
+
+## Reviewer bar and comment budget
+- example_ynh is the architecture: same files, same names, same v2 idioms. A reviewer who did not write it must follow a script top to bottom in one read.
+- No defensive branches without a failure scenario, no hand-rolled reimplementations of a helper, no logic duplicated across install/upgrade/restore (one `_common.sh` function), no settings the scripts never read.
+- Comments: median ~10% non-banner density in the top catalog packages, block length 1 line, max ~4. Keep capability labels, one-line why-traps with a link or verbatim upstream string, rare mechanism notes. Never multi-paragraph prose, change history, commented-out code, or restatements of the next line.
+- `scripts/comment_cleanup.py <repo>` blocks at >~15% density or a run of 6+; `scripts/comment_gate.py <repo> [ref]` proves a cleanup touched only comments (run it plus `bash -n` after any comment sweep).
+
+## Feasibility probe (report only — "would X be easy to package?")
+Answer from cheap evidence, install nothing: download the Linux artifact and `tar tzf` it (arch, size, bundled runtime, rolling-latest URL → needs mirroring as a release asset); enumerate the upstream GitHub org for plugins/sibling UIs; curl the integration surfaces; check whether existing catalog apps already speak to it (an arr-suite integration gap is usually the real cost). A headless daemon usually has a sibling web UI in another repo — search the org for `webui|ui|gui|dashboard|frontend` before judging UX. Instant no: needs exclusive ownership of 80/443, or requires a container/VM at runtime.
+
+## Auditing an existing repo
+Profile first, read only outliers: `find scripts conf -type f | xargs wc -l` per repo, plus a custom-function inventory. Zero custom functions and <~600 LOC is already lean. Extract `[install]` TOP-LEVEL keys only (regex on the line carrying `type`) before grepping them across scripts — naive per-line extraction reports every TOML subkey as an unused setting. 50%+ identical lines between install and upgrade means one shared deploy function. Anything under `scripts/contrib/` not referenced by a lifecycle script is an untested second codepath. Do NOT flag v2.1 idioms (conf/ + `ynh_config_add_systemd`, the `ynh_app_config_apply` shim, a bounded health-wait loop) as hand-rolled. Report findings; change nothing unless asked.
+
+## Catalog quality levels (0–8, bot-assigned)
+0 broken · 1 installable in ≥1 scenario · 2 all scenarios · 3 upgradable · 4 + backup/restore · 5 + no linter ERROR · 6 in YunoHost-Apps · 7 all tests pass and no linter warning · 8 maintained long-term. Level ≤4 hides the app from the catalog AND freezes upgrades for every installed instance. Never claim a level manually; the CI run is the only source.

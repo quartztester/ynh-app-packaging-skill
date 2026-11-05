@@ -14,24 +14,24 @@ Run whenever the live docs move (new helpers version, format v3, nav reorg) or b
 ## Page index — where each lands in this skill
 | Page (under /en/dev/) | Topic | Carried by |
 |---|---|---|
-| packaging/ (root) | philosophy, prerequisites, format history | quality-gates.md reviewer bar; history/v3 → §9 |
+| packaging/ (root) | philosophy, prerequisites, format history | workflow.md reviewer bar; history/v3 → §9 |
 | packaging/manifest | manifest.toml schema, antifeatures, questions | SKILL.md rules 3/8; app-recipes.md; §1 below |
 | packaging/resources | full resource reference | traps-helpers-and-panels.md, native-runtime-and-sidecars.md; §2 below |
 | packaging/scripts | lifecycle scripts, variables, templating | SKILL.md, traps-helpers-and-panels.md; §4 below |
 | packaging/scripts/helpers_v2.0 | legacy helper names | traps-helpers-and-panels.md rename table; §3 (2.0-pin note) |
 | packaging/scripts/helpers_v2.1 | helper reference | SKILL.md rules, traps-helpers-and-panels.md; §3 below |
 | packaging/misc/shell_variables_scope | bash scoping | §5 below |
-| packaging/structure | canonical repo tree | quality-gates.md 0b, repo-hygiene.md, scripts/verify_conformance.py |
+| packaging/structure | canonical repo tree | workflow.md 0b, repo-hygiene.md, scripts/verify_conformance.py |
 | packaging/test | manual tests, package_linter, package_check, CI | SKILL.md Definition of done, repo-hygiene.md; §12 below |
 | packaging/publish | catalog submission PR | repo-hygiene.md; §10 below |
 | packaging/policy | catalog inclusion policy | repo-hygiene.md:75; §10 below |
-| packaging/doc | DESCRIPTION, screenshots, notes | quality-gates.md:27, repo-hygiene.md:74; §11 below |
+| packaging/doc | DESCRIPTION, screenshots, notes | workflow.md:27, repo-hygiene.md:74; §11 below |
 | packaging/advanced/packaging_v2 | v2 format, converter | SKILL.md; §9 below |
 | packaging/advanced/config_panels | config_panel.toml | traps-helpers-and-panels.md §Config panels, app-recipes.md; §8 below |
 | packaging/advanced/hooks | hook reference | traps-lifecycle.md, postfix-integration.md; §6 below |
 | packaging/advanced/sso_ldap_integration | SSO headers + LDAP | ssowat-integration.md, auth-backend-integration.md; §7 below |
 | packaging/advanced/advanced_packagers | dev infrastructure | §13 below |
-| packaging/misc/packaging_apps_git | git/PR workflow | quality-gates.md 0b, repo-hygiene.md; §14 below |
+| packaging/misc/packaging_apps_git | git/PR workflow | workflow.md 0b, repo-hygiene.md; §14 below |
 | packaging/misc/packaging_apps_virtualbox | VirtualBox dev env | §13 below |
 | core/forms (outside packaging) | forms/option-type reference | §16 below |
 | core/devenv (outside packaging) | ynh-dev / Incus dev env | §13 below |
@@ -188,7 +188,7 @@ Run whenever the live docs move (new helpers version, format v3, nav reorg) or b
 3. `ynh_abort_if_errors`: lifecycle scripts get auto `set -eu` and current example_ynh installs ship NO ynh_abort_if_errors — don't re-add it there; BUT scripts/config DOES still use it (config scripts aren't auto set -eu).
 4. scripts/ page staleness: its examples still use v2.0 helper names; under a 2.1 pin those are dead — traps-helpers-and-panels.md's rename table is correct.
 5. (Fixed 2026-10-27 — was this audit's own error, not a doc contradiction) prefetch semantics: prefetch=true is the DEFAULT and means "fetch at provision time"; prefetch=false defers to inside ynh_setup_source; restore never fetches. An earlier version of this file inverted the flag.
-6. multi_instance=false does NOT refuse a second install on YNH 12.1.41.2 (code-read 2026-10-30; manifest-key semantics imply refusal, code doesn't do it): app_install passes action="upgrade" to _check_manifest_requirements (app.py ~1399) while the multi-instance requirement yields only for action=="install" (app_utils.py:949), and _next_instance_number_for_app (app_utils.py:1286) has no gate — a second install proceeds as app__2 over UNSUFFIXED global state (the "app_already_installed" hard-raise only exists in the catalog/info display path, app.py:1309). Consequence + self-guard rule: quality-gates.md §Multi-instance decision rule. Not re-verified on upstream dev (13.x).
+6. multi_instance=false does NOT refuse a second install on YNH 12.1.41.2 (code-read 2026-10-30; manifest-key semantics imply refusal, code doesn't do it): app_install passes action="upgrade" to _check_manifest_requirements (app.py ~1399) while the multi-instance requirement yields only for action=="install" (app_utils.py:949), and _next_instance_number_for_app (app_utils.py:1286) has no gate — a second install proceeds as app__2 over UNSUFFIXED global state (the "app_already_installed" hard-raise only exists in the catalog/info display path, app.py:1309). Consequence + self-guard rule: workflow.md §Multi-instance decision rule. Not re-verified on upstream dev (13.x).
 
 ## 16. core/forms (outside the packaging tree — the option-type reference)
 - The forms page is the full reference for question/option types shared by manifest questions, config panels and other core forms; key behaviors captured in §8 (optional defaults, password rules, regexp quoting, domain/user/group defaults, tags serialization, services auto-reload, run__ buttons + CLI action run).
