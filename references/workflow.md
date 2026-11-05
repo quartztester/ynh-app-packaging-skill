@@ -35,6 +35,7 @@ Run the app once outside YunoHost on a scratch port with throwaway creds and exe
 - YNH 12.1 does NOT enforce the flag at install: a second copy runs over unsuffixed global state and clobbers the first. A false package must SELF-GUARD — fail fast when the resource is already claimed — and must pass the reinstall check.
 
 ## Local package_check (step 3) — the same harness the official CI runs
+- This is the APP harness. `YunoHost/yunohost-ci` is NOT it: that repo is a GitLab Runner custom executor for YunoHost *core* (`.gitlab-ci.yml`, LXD), and it never touches an app package. A PR's `!testme` is queued by `YunoHost/yunorunner` and executed by this same `package_check.sh` inside an appci container, so a local run is the same test list, not an imitation of it. What package_check covers in one run: the linter, install/remove/reinstall at root, subpath and no-url, a private install, multi-instance, same-version and previous-version upgrade, backup/restore, and change_url.
 - Setup: `lynx jq btrfs-progs` + Incus from `pkgs.zabbly.com/incus/lts-6.0`, `usermod -aG incus-admin <user>`, then run everything via `sg incus-admin -c '…'`; btrfs loop pool + `incusbr0` bridge preseeded. Tune ARCH/DIST/YNH_BRANCH in the package_check folder's `config`.
 - Run: `YNHDEV_BACKEND=incus ./package_check.sh <path-to-app_ynh>` in the background (~25–30 min). `-D` dry-run first prints the exact JSON matrix — compare it with the CI job's test list.
 - Artifacts: `full_log_<N>.log` and `summary_<N>.png` (the same png CI posts). Not `Test_results.log`.
