@@ -16,7 +16,7 @@ The skill is five steps. Everything else is the reasoning behind one of them.
    fresh, every time. No vendored template, so the skill cannot go stale.
 2. **Package** — edit the clone in place; keep the template's files, names and
    v2.1 helper idioms.
-3. **Verify locally** — `package_check`, the same harness the official CI runs.
+3. **Verify locally** — [`package_check`](https://github.com/YunoHost/package_check), the same harness the official CI runs. Pull it to latest (or clone it) before every run: a stale clone silently tests an older scenario matrix.
 4. **Run the official CI** — open the PR, comment `!testme`, read the per-test
    summary.
 5. **Fix and repeat** — one failing test at a time, in the repo, until the
