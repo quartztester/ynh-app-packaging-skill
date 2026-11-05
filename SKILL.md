@@ -4,7 +4,7 @@ description: "Package, repair or audit a YunoHost 12 app package (_ynh): manifes
 license: GPL-3.0
 compatibility: "Any agentskills.io-compatible agent. Needs a reachable YunoHost 12.x box (local or ssh), git, python3, and network access to github.com."
 metadata:
-  version: "3.1.2"
+  version: "3.1.3"
   author: Hermes Agent
   tags: yunohost, packaging, debian, sysadmin
 ---
@@ -41,8 +41,8 @@ Never hand-write `manifest.toml` or `scripts/` from memory, never copy an older 
 Edit the clone in place. Keep example_ynh's file set, names and v2 idioms (`ynh_config_add*`, `ynh_app_config_apply`, `ynh_systemctl`, `ynh_setup_source`). Every `ynh_*` call must exist in the local `helpers.v2.1.d` — hallucinated helpers are a hard linter failure. `scripts/verify_conformance.py` checks this plus the file set.
 
 ### 3. Verify locally
-Run package_check, the same harness the official CI uses, before spending CI cycles:
-`YNHDEV_BACKEND=incus ./package_check.sh <repo-dir>` (in a package_check clone; `-D` dry-run first to compare the matrix with `tests.toml`). Green means the completed run's per-test summary. Full setup and traps: references/workflow.md §Local package_check.
+Run [package_check](https://github.com/YunoHost/package_check), the same harness the official CI uses, before spending CI cycles. Keep that clone current — `git -C package_check pull --ff-only`, or clone it if absent, immediately before every run:
+`YNHDEV_BACKEND=incus ./package_check.sh <repo-dir>` (in that clone; `-D` dry-run first to compare the matrix with `tests.toml`). Green means the completed run's per-test summary. Full setup and traps: references/workflow.md §Local package_check.
 
 ### 4. Run the official CI
 Push a branch, open the PR, comment `!testme` as its own comment, then read the bot's per-test summary once the badges settle. Dev CI only fires on YunoHost-Apps org repos; pre-transfer, local package_check is the same matrix. Mechanics: references/workflow.md §Official CI.
