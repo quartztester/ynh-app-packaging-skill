@@ -4,7 +4,7 @@ description: "Package, repair or audit a YunoHost 12 app package (_ynh): manifes
 license: AGPL-3.0
 compatibility: "Any agentskills.io-compatible agent. Needs a reachable YunoHost 12.x box (local or ssh), git, python3, and network access to github.com."
 metadata:
-  version: "3.1.5"
+  version: "3.1.6"
   author: Hermes Agent
   tags: yunohost, packaging, debian, sysadmin
 ---
@@ -49,6 +49,13 @@ Push a branch, open the PR, comment `!testme` as its own comment, then read the 
 
 ### 5. Fix, repeat, then report
 One failing test at a time: read the per-test log, fix the cause in the repo (never on the box), re-run step 3, re-push the branch, re-trigger `!testme`. Stop when the whole matrix is green. A run killed by timeout or still in progress has no verdict — never call it green. Report: what passed, what CI could not cover, what is gated on user approval.
+
+### 6. Ship it to the catalog
+Green CI is the halfway point. Public repo → human verify → transfer to `YunoHost-Apps` →
+`!testme` in the org repo → catalog PR to `YunoHost/apps` → forum + fediverse announcement.
+Org CI passes as two green jobs (bookworm, trixie) with exactly one linter warning each, the
+pre-catalog `not in YunoHost's application catalog`. PR template, transfer gate, credential
+prompts: references/publish-and-catalog.md.
 
 ## Rules that break a package if ignored
 1. **Native only.** No Docker, Kubernetes, Podman, LXC/Incus or VM as the app's install/runtime mechanism — systemd unit, dedicated user, `ynh_setup_source`, native deps. Container-only upstreams are a packaging constraint, not an exemption: references/native-runtime-and-sidecars.md. (The CI harness itself may use containers.) Deviate only if the user acknowledges it in the current task.
@@ -98,6 +105,7 @@ Mechanics for each: references/workflow.md §Manual checks. CI already covers in
 - references/repo-hygiene.md — PII audit, logo/screenshot sourcing, portal tile, conformance sweeps, `tests.toml`, branch discipline, catalog submission and its PR.
 - references/ui-questions-panels-docs.md — install questions, config panels, ADMIN.md wording, and the standard for an admin GUI the package ships itself.
 - references/upstream-repo-staleness-triage.md — one lagging `_ynh` repo or the whole fleet: why it lags, is the update bot dead.
+- references/publish-and-catalog.md — the production path after green CI: public repo, human verification, org transfer (and what to do without membership), the two-job org-CI acceptance rule, the catalog PR template, forum + fediverse announcement, credential prompts.
 - references/app-recipes.md — verified builds and their quirks, one block per app class.
 - `scripts/` — `verify_conformance.py` (file set + hallucinated helpers), `comment_cleanup.py` (comment budget), `comment_gate.py` (proves a cleanup touched only comments), `pii_gate.sh` (pre-push PII sweep), `verify_skill_integrity.py` (this skill's own reference/link check).
 
