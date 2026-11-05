@@ -12,6 +12,7 @@ Read the section you are on. Everything here was proven on a live box or in a re
 Run the app once outside YunoHost on a scratch port with throwaway creds and exercise login + the core API with curl. It settles routes, env vars and required services before you design anything. Delete scratch state afterwards.
 
 ## Local checks on the box, in this order
+- **Manifest pre-flight** (seconds, before any install): validate every `[install.*]` question against the box's own pydantic model — the one-liner is in references/traps-helpers-and-panels.md. A v1-era key like `full_domain = true` parses as TOML yet kills the package before a single script runs, and the CI run only tells you that eight minutes later.
 - **Install** as a background job: `unset PYTHONPATH; yunohost app install <dir> -a "domain=<d>&path=/<p>&init_main_permission=<g>" --force` (ampersand-joined, keys exactly as in the manifest). Add `--no-remove-on-failure` when you expect to autopsy.
 - **Functionality gate** — "install green + endpoints 200" is NOT done. In a real browser with a real portal login (throwaway user, deleted after): perform the app's PRIMARY WRITE action, confirm the result renders after reload, watch ~15 s for bounce loops between app root and login. A token-mint 200 is not proof of auth — the next authed request is where header clobbering shows.
 - **Static serving** — anonymous 302s to the portal MASK 403/404, so prove nginx itself serves the built output: `namei -l <served index.html>` (traverse bit on every dir) and `sudo -u www-data head -c 1 <served index.html>`. Build output created 0750 by the build user 403s every authed visit while anon tests look green — chmod `o+rX` the served dir in every script that builds (install/upgrade/restore).
@@ -30,7 +31,7 @@ Run the app once outside YunoHost on a scratch port with throwaway creds and exe
 
 ## Multi-instance decision rule
 - Default TRUE: helpers suffix dirs/users/dbs with `$app`; a second install becomes `app__2`. Site-per-install apps are always true.
-- FALSE only for a machine-global resource the suffix cannot isolate: kernel/network state (VPN, tunnels), protocol-fixed ports peers hardcode (53, 5222/5269, 3478, 51820, 1935, DLNA, BitTorrent), mail-stack hooks, system-state mutation (firewall, monitoring, backup target, containers), hardware binding. State the reason in a manifest comment AND `doc/ADMIN.md` — `grade_static.py` fails false-without-reason. "Nobody installs two" is not a reason.
+- FALSE only for a machine-global resource the suffix cannot isolate: kernel/network state (VPN, tunnels), protocol-fixed ports peers hardcode (53, 5222/5269, 3478, 51820, 1935, DLNA, BitTorrent), mail-stack hooks, system-state mutation (firewall, monitoring, backup target, containers), hardware binding. State the reason in a manifest comment AND `doc/ADMIN.md` — a false without a stated reason is sent back at review. "Nobody installs two" is not a reason.
 - YNH 12.1 does NOT enforce the flag at install: a second copy runs over unsuffixed global state and clobbers the first. A false package must SELF-GUARD — fail fast when the resource is already claimed — and must pass the reinstall check.
 
 ## Local package_check (step 3) — the same harness the official CI runs

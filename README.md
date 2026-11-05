@@ -19,7 +19,7 @@ It grew out of ~30 real packaging cycles (anubis, remark42, forgejo, gitea, umam
 - A trap catalog covering helpers v2.1 renames, env quoting, panel getter poisoning, ssowat regex anchoring, build-stack version pins, upgrade durability, Postfix mail wiring
 - A two-layer comment gate (blocking density budget + advisory semantic gauntlet, adapted from [this gist](https://gist.github.com/bavanws/123e0343f8a79cec825d9141124a0a83)) with syntax-aware scanning (`#`, `--`, `//`, `<!-- -->`) so lua/js/html files can't pass blind
 - An SSO-first auth decision tree (LDAP / OIDC / SAML / trusted-header / local)
-- Scripts: conformance audit (detects hallucinated helper calls), the comment gate, a comment-only-diff prover, the PII sweep, a static grader, skill self-check
+- Scripts: conformance audit (detects hallucinated helper calls), the comment gate, a comment-only-diff prover, the PII sweep, skill self-check
 - No vendored template: every package starts from a fresh `git clone` of [YunoHost/example_ynh](https://github.com/YunoHost/example_ynh), so the skill cannot go stale
 
 ## Using it
@@ -57,7 +57,7 @@ This skill's gates exist to make that bar reachable: nothing is called done unti
 
 - `SKILL.md` — the workflow and the rules; start here
 - `references/` — 16 topical files, loaded on demand: `workflow.md` (lifecycle + CI mechanics), trap catalogs by symptom, UX doctrine, repo hygiene, official-docs index, per-app recipes
-- `scripts/` — `verify_conformance.py`, `comment_cleanup.py`, `comment_gate.py`, `pii_gate.sh`, `grade_static.py`, `verify_skill_integrity.py`
+- `scripts/` — `verify_conformance.py`, `comment_cleanup.py`, `comment_gate.py`, `pii_gate.sh`, `verify_skill_integrity.py`
 - `docs/research/` — provenance for the UX doctrine (level-8 calibration corpus, reusable scripts): human reference, not part of the agent's load path
 - `CONTRIBUTION.md` / `CONTRIBUTION_fr.md` — the human contributor guide
 
