@@ -4,7 +4,7 @@ description: "Package, repair or audit a YunoHost 12 app package (_ynh): manifes
 license: GPL-3.0
 compatibility: "Any agentskills.io-compatible agent. Needs a reachable YunoHost 12.x box (local or ssh), git, python3, and network access to github.com."
 metadata:
-  version: "3.0.0"
+  version: "3.1.0"
   author: Hermes Agent
   tags: yunohost, packaging, debian, sysadmin
 ---
@@ -104,7 +104,7 @@ Mechanics for each: references/workflow.md §Manual checks. CI already covers in
 ## Maintaining this skill
 - Commit every edit: `scripts/verify_skill_integrity.py .` must pass (references resolve both ways, per-file line budget), `scripts/pii_gate.sh` before pushing, then bump `metadata.version`, tag `v<x.y.z>`, `gh release create <tag>`.
 - One canonical home per trap: fold a lesson into the existing file and delete the duplicate instead of adding a parallel section. A rule earns a place only if a real live failure proved it or it covers a script every package ships.
-- Human docs live in `CONTRIBUTION.md` / `CONTRIBUTION_fr.md`; research provenance in `docs/research/`. Neither is part of the agent's load path — don't read them to package an app.
+- Human docs live in `CONTRIBUTION.md` / `CONTRIBUTION_fr.md`. They are not part of the agent's load path — don't read them to package an app.
 
 ## AI-use policy — verbatim from the official packaging docs
 > If you still decide to use AI, we highly recommend you to be transparent and responsible about it, and "own" it: you must be able to understand and explain every piece of your code as if you wrote it yourself, you must be able to explain what it does and why you chose to implement it this way. You can't just throw something you don't even understand yourself at other people, and expect them to maintain it for you.
