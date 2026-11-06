@@ -17,6 +17,17 @@ the previous stage "looks fine".
 Ask in plain language, never assume an account exists, never write a token into the repo, a
 commit or this skill, and never echo one back. Session-scoped env vars only.
 
+For a Discourse forum with GitHub SSO and no personal API-key page, the login ladder is:
+1. Agent attaches to the human's OWN logged-in browser (CDP debug port) and drives "Log with
+   GitHub" — only possible when agent and human share a desktop; zero credentials typed.
+2. Headless server: human logs in in their browser and pastes the `_forum_session` cookie
+   (F12 → Network → first request → Cookie header). Post via `/session/csrf` + `POST /posts.json`.
+   The cookie is password-equivalent: store chmod 600, never commit, and tell the human to use
+   "log out of all devices" in forum settings the moment the post is verified.
+3. Fallback when the human won't share either: agent drafts the final markdown, human pastes it.
+Never type the human's GitHub password + 2FA into an agent-controlled browser — that escalates a
+forum-scoped credential to their whole GitHub identity, which is worse than every option above.
+
 ## 1. Public repo — gate: local package_check green
 Repo `$GH_ACCOUNT/<upstream-name>_ynh`, tag `v<version>-ynh<N>`, sources as release assets.
 Every tag gets a matching GitHub release — a tag with no release is a half-published version.
