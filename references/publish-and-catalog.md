@@ -17,16 +17,21 @@ the previous stage "looks fine".
 Ask in plain language, never assume an account exists, never write a token into the repo, a
 commit or this skill, and never echo one back. Session-scoped env vars only.
 
-For a Discourse forum with GitHub SSO and no personal API-key page, the login ladder is:
-1. Agent attaches to the human's OWN logged-in browser (CDP debug port) and drives "Log with
-   GitHub" — only possible when agent and human share a desktop; zero credentials typed.
-2. Headless server: human logs in in their browser and pastes the `_forum_session` cookie
-   (F12 → Network → first request → Cookie header). Post via `/session/csrf` + `POST /posts.json`.
-   The cookie is password-equivalent: store chmod 600, never commit, and tell the human to use
-   "log out of all devices" in forum settings the moment the post is verified.
-3. Fallback when the human won't share either: agent drafts the final markdown, human pastes it.
-Never type the human's GitHub password + 2FA into an agent-controlled browser — that escalates a
-forum-scoped credential to their whole GitHub identity, which is worse than every option above.
+For a Discourse forum with GitHub SSO (no personal API-key page), the DEFAULT is the session
+cookie — it works from any headless server with zero browser automation:
+1. Human logs in in their own browser, then F12 → Network → reload → click the first document
+   request → copy the whole `Cookie:` header and paste it to the agent.
+2. Agent stores it in `~/.forum_cookie` (chmod 600, never in a commit/log/skill), then posts via
+   Discourse JSON API: GET `/session/csrf` with the cookie to grab the CSRF token, then
+   `POST /posts.json` with headers `X-CSRF-Token`, `Api-Username: <username>` and the cookie.
+   Verify by fetching the returned topic URL and checking the title and body render.
+3. Tell the human the moment the post is verified: forum → Preferences → Account →
+   "Log out of all devices" kills the cookie server-side. The cookie is password-equivalent —
+   say so once, plainly, then don't lecture.
+Only when the human won't share a cookie: agent attaches to their own logged-in browser via CDP
+(desktop-only) or drafts the markdown for them to paste. Never type the human's GitHub password
++ 2FA into an agent-controlled browser — that trades a forum-scoped credential for their whole
+GitHub identity.
 
 ## 1. Public repo — gate: local package_check green
 Repo `$GH_ACCOUNT/<upstream-name>_ynh`, tag `v<version>-ynh<N>`, sources as release assets.
