@@ -4,7 +4,7 @@ description: "Package, repair or audit a YunoHost 12 app package (_ynh): manifes
 license: AGPL-3.0
 compatibility: "Any agentskills.io-compatible agent. Needs a reachable YunoHost 12.x box (local or ssh), git, python3, and network access to github.com."
 metadata:
-  version: "3.3.0"
+  version: "3.3.1"
   author: Hermes Agent
   tags: yunohost, packaging, debian, sysadmin
 ---
