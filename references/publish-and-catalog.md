@@ -23,8 +23,8 @@ GitHub SSO, the DEFAULT login is the session cookie (no API-key page exists):
    `X-CSRF-Token`, `Api-Username: <username>` + the cookie. Verify by fetching the returned
    topic URL and checking title and body render.
 3. Once verified, tell the human: Preferences → Account → "Log out of all devices" kills the
-   cookie server-side. The cookie is password-equivalent — say so once, plainly, don't lecture.
-   Trust-level-1 accounts cannot delete their own topics — never test writes with a real topic.
+   cookie server-side (password-equivalent — say so once, don't lecture). TL1 accounts cannot
+   delete their own topics — never test writes with a real topic.
 Only when the human won't share a cookie: attach to their own logged-in browser via CDP
 (desktop-only) or draft the markdown for them to paste. Never type the human's GitHub password
 + 2FA into an agent-controlled browser — that trades a forum-scoped credential for their whole
@@ -107,9 +107,8 @@ after the catalog PR is open — the links are the point.
 Google indexes the Discourse title as `<title>` and the first post as meta description — keyword
 tagline titles in the Contribute Room pull 5–12k views; bare-name titles ~250.
 
-**Title:** `[NEW APP] <App Name> – <keyword phrase naming the app category> for YunoHost`,
-≤60 chars or Google truncates it — the category words are what humans search ("Docmost –
-open-source collaborative wiki for YunoHost", not "[NEW APP] Docmost").
+**Title:** `[NEW APP] <App Name> – <keyword phrase naming the app category> for YunoHost` — ≤60
+chars or Google truncates it; category words are what humans search.
 
 **Body — exactly this, no preamble:**
 ```
