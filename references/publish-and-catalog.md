@@ -76,7 +76,13 @@ Upstream: <upstream repo URL>
 Category: `<category>` (matching <two or three similar catalog apps>)
 
 CI: App has passed CI — <link to the app repo PR whose `!testme` run was green>
+
+Review by me and installed on my machine for testing. There is a fully determined human behind this PR with LLM assistance.
+Please let me know if not up to any quality or standards. See my Philosophy and Strategy.md for my why to packaging.
+I will maintain this repo.
 ```
+The app logo ships in the same PR as `logos/<app>.png`. Real example of the accepted shape:
+[YunoHost/apps#3689](https://github.com/YunoHost/apps/pull/3689) — match it, add no other text.
 While the transfer is pending, the Package line reads
 `Package (pending org transfer): https://github.com/$GH_ACCOUNT/<app>_ynh`.
 The CI link must point at a real green run — never ship the PR with a placeholder in it.
