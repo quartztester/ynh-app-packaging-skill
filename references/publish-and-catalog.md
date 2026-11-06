@@ -14,11 +14,10 @@ the previous stage "looks fine".
 | YunoHost forum | the announcement topic | ask for their forum account (they post; you hand them the exact text) or a Discourse API key for `POST /posts.json` |
 | Lemmy / Mastodon | the fediverse announcement | ask for instance URL + access token |
 
-Ask in plain language, never assume an account exists, never write a token into the repo, a
-commit or this skill, and never echo one back. Session-scoped env vars only.
-
-For a Discourse forum with GitHub SSO (no personal API-key page), the DEFAULT is the session
-cookie — works from any headless server, zero browser automation:
+Ask in plain language, never assume an account exists, never write a token into the repo, a commit
+or this skill, and never echo one back. Session-scoped env vars only. For a Discourse forum with
+GitHub SSO (no personal API-key page), the DEFAULT is the session cookie — works from any headless
+server, zero browser automation:
 1. Human logs in in their own browser, then F12 → Network → reload → first document request →
    copy the whole `Cookie:` header and paste it to the agent.
 2. Agent stores it in `~/.forum_cookie` (chmod 600, never in a commit/log/skill), then GETs
@@ -103,16 +102,16 @@ While the transfer is pending, the Package line reads
 The CI link must point at a real green run — never ship the PR with a placeholder in it.
 
 ## 6. Announce — forum, then fediverse
-Forum topic in the Contribute Room (https://forum.yunohost.org/c/contribute-room), posted from
-the human's forum account. Announce only after the catalog PR is open — the links are the point.
+Forum topic in the Contribute Room (https://forum.yunohost.org/c/contribute-room). Announce only
+after the catalog PR is open — the links are the point.
 
-Google indexes Discourse titles as `<title>` and the first post as the meta description; the
-Contribute Room's view counts prove the title decides everything (keyword tagline titles: 5–12k
-views; `[NEW APP] Mediathèque`: 263).
+Google indexes the Discourse title as `<title>` and the first post as meta description; Contribute
+Room view counts prove the title decides everything (keyword tagline titles: 5–12k views;
+`[NEW APP] Mediathèque`: 263).
 
-**Title:** `[NEW APP] <App Name> – <keyword phrase naming the app category> for YunoHost`
-≤60 chars or Google truncates it; the category words are what humans actually search
-("Docmost – open-source collaborative wiki for YunoHost", not "[NEW APP] Docmost").
+**Title:** `[NEW APP] <App Name> – <keyword phrase naming the app category> for YunoHost`,
+≤60 chars or Google truncates it — the category words are what humans search ("Docmost –
+open-source collaborative wiki for YunoHost", not "[NEW APP] Docmost").
 
 **Body — this order, English first:**
 1. First paragraph = the Google snippet: app name, what it does, the category words, "self-hosted",
@@ -120,13 +119,11 @@ views; `[NEW APP] Mediathèque`: 263).
 2. One inline screenshot (drag it into the composer — hosted upload, not a hotlink).
 3. `## What works` / `## Install` H2s with the keywords; state upstream license and version.
 4. Links: catalog PR, package repo, upstream repo, wishlist entry if it was one.
-5. Short French translation of paragraph 1 at the end — the forum is bilingual and FR shares
-   drive the links that drive rankings.
-
-Then the same text shortened to a fediverse post on their Lemmy/Mastodon account, linking the
-catalog PR.
+5. Short French translation of paragraph 1 at the end — the forum is bilingual, FR shares drive
+   the links that drive rankings. Then the same text, shortened, as a fediverse post on their
+   Lemmy/Mastodon account linking the catalog PR.
 
 ## Rehearse on a fork
-Dry-run the whole catalog diff against `$GH_ACCOUNT/apps` (a fork of `YunoHost/apps`) instead
-of the real repo: branch off `upstream/main`, apply the three files, open the PR there, read
-the rendered body. Only after it reads correctly does the same branch go to `YunoHost/apps`.
+Dry-run the catalog diff against `$GH_ACCOUNT/apps` (fork of `YunoHost/apps`): branch off
+`upstream/main`, apply the three files, open the PR there, read the rendered body; only then send
+the same branch to `YunoHost/apps`.
