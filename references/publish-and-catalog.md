@@ -77,9 +77,9 @@ Category: `<category>` (matching <two or three similar catalog apps>)
 
 CI: App has passed CI — <link to the app repo PR whose `!testme` run was green>
 
-Review by me and installed on my machine for testing. There is a fully determined human behind this PR with LLM assistance.
-Please let me know if not up to any quality or standards. See my [Philosophy](https://github.com/quartztester/ynh-app-packaging-skill/blob/main/PHILOSOPHY.md) and [Strategy](https://github.com/quartztester/ynh-app-packaging-skill/blob/main/STRATEGY.md) for my why to packaging.
-I will maintain this repo.
+Review by me and installed on my machine for testing. There is a fully determined human behind this PR with LLM assistance. Please let me know if not up to any quality or standards. See my [Philosophy](https://github.com/quartztester/ynh-app-packaging-skill/blob/main/PHILOSOPHY.md) and [Strategy](https://github.com/quartztester/ynh-app-packaging-skill/blob/main/STRATEGY.md) for my why to packaging.
+
+I will maintain this repo to the best of my ability.
 ```
 The app logo ships in the same PR as `logos/<app>.png`. Real example of the accepted shape:
 [YunoHost/apps#3689](https://github.com/YunoHost/apps/pull/3689) — match it, add no other text.
