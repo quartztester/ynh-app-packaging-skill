@@ -88,11 +88,28 @@ While the transfer is pending, the Package line reads
 The CI link must point at a real green run — never ship the PR with a placeholder in it.
 
 ## 6. Announce — forum, then fediverse
-Forum topic in the Contribute Room (https://forum.yunohost.org/c/contribute-room), following
-the existing `[<app>] <one-line description>` topic titles: what the app does, the catalog PR
-link, the package link, and the tested YunoHost version. Use the human's forum account.
+Forum topic in the Contribute Room (https://forum.yunohost.org/c/contribute-room), posted from
+the human's forum account. Announce only after the catalog PR is open — the links are the point.
+
+Google indexes Discourse titles as `<title>` and the first post as the meta description; the
+Contribute Room's view counts prove the title decides everything (keyword tagline titles: 5–12k
+views; `[NEW APP] Mediathèque`: 263).
+
+**Title:** `[NEW APP] <App Name> – <keyword phrase naming the app category> for YunoHost`
+≤60 chars or Google truncates it; the category words are what humans actually search
+("Docmost – open-source collaborative wiki for YunoHost", not "[NEW APP] Docmost").
+
+**Body — this order, English first:**
+1. First paragraph = the Google snippet: app name, what it does, the category words, "self-hosted",
+   tested YunoHost version. No fluff before the facts — Discourse hands Google this text.
+2. One inline screenshot (drag it into the composer — hosted upload, not a hotlink).
+3. `## What works` / `## Install` H2s with the keywords; state upstream license and version.
+4. Links: catalog PR, package repo, upstream repo, wishlist entry if it was one.
+5. Short French translation of paragraph 1 at the end — the forum is bilingual and FR shares
+   drive the links that drive rankings.
+
 Then the same text shortened to a fediverse post on their Lemmy/Mastodon account, linking the
-catalog PR. Announce only after the catalog PR is open — the links are the point.
+catalog PR.
 
 ## Rehearse on a fork
 Dry-run the whole catalog diff against `$GH_ACCOUNT/apps` (a fork of `YunoHost/apps`) instead
