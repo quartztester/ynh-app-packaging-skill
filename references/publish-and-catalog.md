@@ -75,7 +75,7 @@ Package: https://github.com/YunoHost-Apps/<app>_ynh
 Upstream: <upstream repo URL>
 Category: `<category>` (matching <two or three similar catalog apps>)
 
-CI: App has passed CI — <link to the app repo PR whose `!testme` run was green>
+CI: App has passed CI and follows example_ynh — <link to the app repo PR whose `!testme` run was green>
 
 Review by me and installed on my machine for testing. There is a fully determined human behind this PR with LLM assistance. Please let me know if not up to any quality or standards. See my [Philosophy](https://github.com/quartztester/ynh-app-packaging-skill/blob/main/PHILOSOPHY.md) and [Strategy](https://github.com/quartztester/ynh-app-packaging-skill/blob/main/STRATEGY.md) for my why to packaging.
 
