@@ -27,7 +27,7 @@ something they might otherwise not have the technical chops for. There now sits
 over 500+ wishlist apps that have not been packaged. This is clear indicative
 demand for the project that has not been met and can easily be met by LLMs.
 
-Human Hours can only do so much. A philosophy of package it anyway.*
+Human hours can only do so much. A philosophy of package it anyway.
 
 1. I truly believe we are missing a significant portion of users that would like
    to host their infrastructure or apps but neglect it due to the backlog of our
