@@ -57,3 +57,10 @@ When the app needs a Python newer than Debian's (Django 6 wants ≥3.13; Debian 
 - Consequence: the app is NOT docker-only — pin the upstream binary via `ynh_setup_source` (AppImage → `--appimage-extract` into `$install_dir`), apt-install the Electron GUI deps (`libgtk-3-0 libnss3 libatk-bridge2.0`). The packaging work is the streaming layer, not the app.
 - Minimal native streaming stack, all stock Debian: xvfb + x11vnc + noVNC/websockify, nginx with websocket upgrade, ssowat in front (VNC password in app settings). Latency worse than WebRTC but fine for text apps; chasing GPU-parity WebRTC stacks (Selkies/KasmVNC) natively is not worth the fragility.
 - Flag BEFORE investing: these containers expose ONE shared desktop session — YunoHost multi-user collapses into a single shared app instance/vault.
+
+## Python apps upstream ships as Docker+Chrome images (flaresolverr_ynh)
+- Upstream's release tarball can be a pyinstaller bundle with an amd64 Chrome baked in — read the Dockerfile first: if it's just `pip install` + apt chromium, package THAT natively (source archive + `python3 -m venv` + apt `chromium chromium-driver xvfb`) and get `architectures = "all"` for free where the binary bundle gives amd64-only.
+- Docker-isms hardcoded in app code (`/app/chromedriver` detection) → `sed -i` the one literal to `$install_dir/...` in install AND upgrade (source re-extracts every upgrade). Never populate system `/app` — collides across multi-instance.
+- Chromium-driven Python caches (undetected_chromedriver's patched binary) write under `$HOME`: set `Environment=HOME=__DATA_DIR__` in the unit, else it writes to root's home when run by systemd.
+- app's pinned deps vs Debian python: check `requires_python` on PyPI for the pinned versions before committing to bookworm python (websockets 17 needs >=3.11 = bookworm exactly OK).
+- Functionality test payload for FlareSolverr v3.5+: `{"cmd":"request.get","url":"...","method":"get"}` — flat, no `params` wrapper, cmd is dotted (`request`, or nested `params`, both return a parse-ish error that looks like a broken service).
