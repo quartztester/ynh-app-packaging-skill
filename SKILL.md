@@ -4,7 +4,7 @@ description: "Package, repair or audit a YunoHost 12 app package (_ynh): manifes
 license: AGPL-3.0
 compatibility: "Any agentskills.io-compatible agent. Needs a reachable YunoHost 12.x box (local or ssh), git, python3, and network access to github.com."
 metadata:
-  version: "3.3.1"
+  version: "3.4.0"
   author: Hermes Agent
   tags: yunohost, packaging, debian, sysadmin
 ---
@@ -53,6 +53,9 @@ One failing test at a time: read the per-test log, fix the cause in the repo (ne
 ### 6. Ship it to the catalog
 Green CI is the halfway point. Public repo → human verify → transfer to `YunoHost-Apps` →
 `!testme` in the org repo → catalog PR to `YunoHost/apps` → forum + fediverse announcement.
+Pushing the working draft as a public personal repo is pre-approved; transferring to the org and
+opening the catalog PR each require explicit user approval AFTER the user has installed and
+tested the app on their own machine (references/publish-and-catalog.md §1–2, §5).
 Org CI passes as two green jobs (bookworm, trixie) with exactly one linter warning each, the
 pre-catalog `not in YunoHost's application catalog`. PR template, transfer gate, credential
 prompts: references/publish-and-catalog.md.

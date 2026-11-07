@@ -1,10 +1,9 @@
 # Publish, transfer, catalog, announce — the production path
 
-Green CI is the halfway point. A package becomes a catalog app only after it has a public repo, a
-human who installed it, an org transfer, two green org-CI jobs and a merged entry in
-`YunoHost/apps`, then an announcement. Each stage has one gate — do not move forward because the
-previous stage "looks fine":
-`local green` → `public repo` → `human verify` → `transfer` → `org CI` → `catalog PR` → `announce`
+Green CI is the halfway point. A package becomes a catalog app only after a public repo, a human
+who installed it, an org transfer, two green org-CI jobs, a merged entry in `YunoHost/apps`, then
+an announcement. Each stage has one gate — never move forward because the previous looked fine:
+`local green` → `public repo (no ask)` → `human verify (ASK — user tests on their own machine)` → `transfer (ASK)` → `org CI` → `catalog PR (ASK)` → `announce`
 
 ## Credentials — ask once, before the stage that needs them
 | what | needed for | how to get it |
@@ -30,16 +29,17 @@ Only when the human won't share a cookie: attach to their own logged-in browser 
 + 2FA into an agent-controlled browser — that trades a forum-scoped credential for their whole
 GitHub identity.
 
-## 1. Public repo — gate: local package_check green
-Repo `$GH_ACCOUNT/<upstream-name>_ynh`, tag `v<version>-ynh<N>`, sources as release assets.
-Every tag gets a matching GitHub release — a tag with no release is a half-published version.
+## 1. Public repo — gate: local package_check green. Never ask permission to push.
+Push the working draft to `$GH_ACCOUNT/<upstream-name>_ynh` as a **public** repo as soon as it
+passes local package_check — standing approved, do not ask. Tag `v<version>-ynh<N>` + matching
+GitHub release (a tag without one is half-published), sources as release assets.
 
-## 2. Human verification — gate: the human installed it
-The human reads the diff and installs the package on their own machine for testing. That is a
-real gate, not a formality: present the evidence and stop. The standard they judge by is
-`PHILOSOPHY.md` and `STRATEGY.md` in this skill's repo — read them, never paraphrase them back.
+## 2. Human verification — gate: the human installed it. ASK before transferring.
+The human reads the diff and installs on their own machine — a real gate: present the evidence and
+stop. Nothing moves to the org (step 3) or catalog (step 5) until they confirm they tested it and
+approve. Judge by `PHILOSOPHY.md` and `STRATEGY.md` in this skill's repo, never paraphrase them.
 
-## 3. Transfer — gate: YunoHost-Apps membership
+## 3. Transfer — gate: explicit user approval + YunoHost-Apps membership
 ```bash
 gh api orgs/YunoHost-Apps/memberships/$GH_ACCOUNT        # 404 = not a member yet
 gh api repos/$GH_ACCOUNT/<app>_ynh/transfer -f new_owner=YunoHost-Apps
@@ -66,10 +66,10 @@ That warning is structural — the app cannot be checked against a catalog it is
 Judge the completed per-test summary; a run still in progress, a timeout, or the first SUCCESS
 banner in the log is not a verdict.
 
-## 5. Catalog PR — gate: catalog_linter exit 0
-PR to [YunoHost/apps](https://github.com/YunoHost/apps). Three files in the normal case:
-- `apps.toml` — entry inserted at its **alphabetic** slot: `branch`, `category` (from
-  `categories.toml`), `state = "working"`, `url` = the `YunoHost-Apps` URL.
+## 5. Catalog PR — gate: explicit user approval + catalog_linter exit 0
+PR to [YunoHost/apps](https://github.com/YunoHost/apps). NEVER open it before the user confirmed
+they tested the app on their own machine and explicitly approved the PR. Three files normally:
+- `apps.toml` — inserted at its **alphabetic** slot: `branch`, `category`, `state = "working"`, `url` = the `YunoHost-Apps` URL.
 - `logos/<id>.png` — the app's logo, 512px square PNG with transparency.
 - `wishlist.toml` — delete the app's block if it exists; `graveyard.toml` — delete the entry
   when refreshing a dead app. Neither present → the PR touches two files.
