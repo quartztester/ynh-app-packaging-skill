@@ -64,3 +64,5 @@ When the app needs a Python newer than Debian's (Django 6 wants ≥3.13; Debian 
 - Chromium-driven Python caches (undetected_chromedriver's patched binary) write under `$HOME`: set `Environment=HOME=__DATA_DIR__` in the unit, else it writes to root's home when run by systemd.
 - app's pinned deps vs Debian python: check `requires_python` on PyPI for the pinned versions before committing to bookworm python (websockets 17 needs >=3.11 = bookworm exactly OK).
 - Functionality test payload for FlareSolverr v3.5+: `{"cmd":"request.get","url":"...","method":"get"}` — flat, no `params` wrapper, cmd is dotted (`request`, or nested `params`, both return a parse-ish error that looks like a broken service).
+
+- v2.1 has NO `ynh_exec_warn_less` (v1 helper, dies 'command not found' mid-upgrade): plain command + `-qq` flags, or `ynh_exec_and_print_stderr_only_if_error` / `ynh_hide_warnings` from helpers.v2.1.d/logging.
