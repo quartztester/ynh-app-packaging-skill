@@ -20,17 +20,25 @@ Anything not mentioned below is standard YunoHost boilerplate identical in most 
 ## Decisions
 One bullet per slot. Keep every slot — write "standard" where the package does the
 obvious thing; uniform slots are what makes two packages comparable.
-- **Source:** release asset / binary / tarball; sha256 pins; per-arch; in_subdir handling.
-- **Runtime:** interpreter or sidecar; how it's obtained; offline deps.
+- **Source:** release asset / binary / tarball; sha256 pins; per-arch; in_subdir handling; decoy sources kept only for autoupdate; fetch-from-side-repo or live unpinned downloads.
+- **Runtime:** interpreter or build chain; how it's obtained; offline deps.
+- **Services:** extra systemd units/sidecars/timers beyond the app unit; why each exists.
 - **Storage:** DB/cache instance (private vs shared); where state lives.
-- **Auth:** ldap/sso verdict; permission split; portal regex if any.
+- **Auth:** ldap/sso verdict; permission split incl. non-standard perms (API public, registry outside path); ssh/mail user grants.
 - **Path:** root-only or subdir; how it's enforced.
+- **Ports/firewall:** non-loopback ports, direct-TLS surfaces, `--needs_exposed_ports`.
+- **Scheduler:** cron/timers outside the main unit.
+- **Migration:** version-hop strategy, compat gates, PRE/POST_UPGRADE.d, secret preservation across re-renders.
 - **Sandboxing:** hardening level; named exceptions with the reason.
 - **Backup:** what's in/out; regeneration step on restore.
+- **Admin-surface:** config-panel fields and what they drive; live inspection helpers.
 
 ## Don't break
 Gotchas a future maintainer must not "fix" — sandbox relaxations, permission
-fixups, CI test exclusions, intentional warnings. Each ≤2 lines with a file#Lx-Ly.
+fixups, CI test exclusions, intentional warnings, checksum/secret re-stores.
+Include contradictions (manifest says multi_instance but CI excludes
+install.multi; tests commented out) — document the mismatch, don't guess which
+side wins. Each ≤2 lines with a file#Lx-Ly.
 ```
 
 ## Rules
