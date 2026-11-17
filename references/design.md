@@ -20,7 +20,7 @@ Anything not mentioned below is standard YunoHost boilerplate identical in most 
 ## Decisions
 One bullet per slot. Keep every slot — write "standard" where the package does the
 obvious thing; uniform slots are what makes two packages comparable.
-- **Source:** release asset / binary / tarball; sha256 pins; per-arch; in_subdir handling; decoy sources kept only for autoupdate; fetch-from-side-repo or live unpinned downloads.
+- **Source:** release asset / binary / tarball; sha256 pins; per-arch; in_subdir handling; decoy sources kept only for autoupdate (say so, and note when the manifest version doesn't pin what actually gets installed); fetch-from-side-repo or live unpinned downloads.
 - **Runtime:** interpreter or build chain; how it's obtained; offline deps.
 - **Services:** extra systemd units/sidecars/timers beyond the app unit; why each exists.
 - **Storage:** DB/cache instance (private vs shared); where state lives.
