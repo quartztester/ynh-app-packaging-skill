@@ -1,5 +1,10 @@
 # Per-app packaging recipes — verified builds (ynh-app-packaging)
 
+## Version pins (level-8 fleet census, 2026-11, 454 repos)
+- PHP: newest minor upstream supports; fleet majors are 8.5 (48% of php apps) / 8.4 / 8.3 / 8.2 — 79 repos use PHP at all.
+- Node: major-only pins are the fleet norm (22: 42 repos, 24: 36); full pins rare. `[resources.nodejs] version="24"` rides the shared `/opt/node_n`.
+- `ynh_hide_warnings` (70% of fleet) is almost always wrapped around package-manager stderr noise: `ynh_hide_warnings ynh_exec_as_app npm install` / `pip install` / `corepack prepare`.
+
 ## Flarum 2.0 (YunoHost-Apps)
 - LDAP login needs the Flarum-2 fork `yippy/flarum-ext-auth-ldap` (settings model is ONE JSON key `<extid>.domains`, array of domain objects, seed via SQL, MEMBER group id 3) — `tituspijean/flarum-ext-auth-ldap` (^1.0) is dead. Composer 1→2 mechanics: traps-build-and-appcode.md.
 - `config.php` `driver` MUST be `mariadb`: Flarum 2 gates JSON SQL dialect by driver name and MariaDB rejects `CAST(? AS JSON)` (500 db_error on posting). Set it in the install template AND rewrite the kept config.php on upgrade.

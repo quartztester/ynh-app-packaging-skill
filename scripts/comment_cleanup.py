@@ -1,12 +1,21 @@
 #!/usr/bin/env python3
 """comment cleanup check (rule 7b) — flag comment-heavy or narration-heavy files.
 
-Usage: comment_cleanup.py <repo> [<repo>...]
+Usage: comment_cleanup.py [--baseline DIR] <repo> [<repo>...]
 Exit 1 if any file is flagged. Two layers, one blocking + one advisory
 (maintainer call: prose blocks are accepted style, so only real walls
 block; standalone why-one-liners, however many in a row, never do):
 
-BLOCKING budget:
+DELTA MODE (--baseline, the default invocation for skill-built packages):
+  point --baseline at a fresh example_ynh clone; the gate measures only
+  comment lines the package ADDED or CHANGED vs that template. Fleet
+  ground truth (454 level-8 repos, 2026-11): example_ynh itself carries
+  ~50 comment lines per script (banners, template FIXME prose) and 64%
+  of level-8 packages fail an absolute-15% budget — the template is the
+  house style, not a violation. Without --baseline the absolute budget
+  applies (joining/auditing an existing repo: keep its style).
+
+BLOCKING budget (per measured set):
   - comment density > 15% of file lines (min 10 comment lines), or
   - a consecutive WRAPPED-PROSE run >= 6 lines (continuation lines
     lowercase or lines ending mid-sentence — a wall of narration)
@@ -33,15 +42,15 @@ not know are skipped, never guessed.
 Vendored upstream files are exempt (rule 7b: never trim them).
 """
 import fnmatch, os, re, sys
+from collections import Counter
 
 CEILING = 0.15
 MIN_LINES = 10
 MAX_RUN = 6
 PROSE_RUN = 3
 
-VENDORED = ["conf/nova3/*", "conf/nova3/**", "*nova2dl.py", "*novaprinter.py",
-            "conf/webui/templates/*", "conf/redis.conf",
-            "conf/i2pd.conf", "conf/tunnels.conf", "scripts/contrib/*"]
+# ponytail: name-based list kept minimal; generic dirs cover upstream code
+VENDORED = ["sources/*", "sources/**", "scripts/contrib/*"]
 
 SCAN_DIRS = ("conf", "scripts")
 SCAN_FILES = ("manifest.toml", "tests.toml", "config_panel.toml")
@@ -61,7 +70,7 @@ ALL_CAPS_TITLE = re.compile(r"^\s*#\s*[A-Z0-9][A-Z0-9 \-/&.]{2,70}\s*$")
 # keep categories (gist): the link/convention itself is the why
 KEEP = re.compile(
     r"keep in sync|same logic as|mirrors? the|must not clash|"
-    r"matches the API default|pence|units?|portrait|TODO|FIXME|FIXME|"
+    r"matches the API default|units?|TODO|FIXME|"
     r"Keep this path for calling|this script is only run if actual change|"
     r"new location is available via")
 # change narration addressed to a diff reviewer, not a file reader
@@ -79,7 +88,27 @@ def syntax_for(path):
             return rx
     return None
 
-def scan(path):
+
+def baseline_filter(baseline_lines, text):
+    """Comment lines identical to a baseline (example_ynh) comment line are
+    house style, not the package's own: return text minus one occurrence of
+    each baseline comment line (multiset — position-independent, so a
+    template comment that moved in a rearranged file still drops)."""
+    if not baseline_lines:
+        return text
+    pool = Counter(l.strip() for l in baseline_lines
+                   if l.strip().startswith("#"))
+    kept = []
+    for l in text:
+        s = l.strip()
+        if s.startswith("#") and pool.get(s):
+            pool[s] -= 1
+            continue
+        kept.append(l)
+    return kept
+
+
+def scan(path, baseline=None):
     """Return (reasons, comment_count, total_lines)."""
     rx = syntax_for(path)
     ext = path.rsplit(".", 1)[-1].lower() if "." in path else ""
@@ -89,6 +118,9 @@ def scan(path):
         lines = open(path, encoding="utf-8", errors="replace").read().splitlines()
     except OSError:
         return [], [], 0, 0
+    if baseline is not None:
+        # delta mode: template furniture is exempt; total lines stay real
+        lines = baseline_filter(baseline, lines)
     total = len(lines)
     comments, prose = 0, 0
     wrapped_runs, run, cur = [], 0, []
@@ -142,7 +174,7 @@ def scan(path):
     advisory += sem
     return hard, advisory, comments, total
 
-def check_repo(repo):
+def check_repo(repo, baseline=None):
     repo = repo.rstrip("/")
     targets = [os.path.join(repo, f) for f in SCAN_FILES if os.path.exists(os.path.join(repo, f))]
     for d in SCAN_DIRS:
@@ -158,20 +190,48 @@ def check_repo(repo):
             continue
         if os.path.islink(p) or not os.path.isfile(p):
             continue
-        hard, advisory, c, n = scan(p)
+        bl = baseline.get(rel) if baseline is not None else None
+        hard, advisory, c, n = scan(p, bl)
         if hard or advisory:
             flagged.append((rel, "; ".join(dict.fromkeys(hard)),
                             "; ".join(dict.fromkeys(advisory)), c, n))
     return flagged
 
+def load_baseline(root):
+    """{relative path: [comment lines]} for files the scanner knows."""
+    out = {}
+    for d, _, files in os.walk(root):
+        if ".git" in d.split(os.sep):
+            continue
+        for f in files:
+            p = os.path.join(d, f)
+            rel = os.path.relpath(p, root)
+            if syntax_for(p) is None and f.rsplit(".", 1)[-1].lower() not in HTML:
+                continue
+            try:
+                out[rel] = open(p, encoding="utf-8", errors="replace").read().splitlines()
+            except OSError:
+                pass
+    return out
+
 def main():
+    args = sys.argv[1:]
+    baseline = None
+    if args and args[0] == "--baseline":
+        if len(args) < 3:
+            sys.exit("usage: comment_cleanup.py [--baseline example_ynh-dir] <repo>...")
+        baseline = load_baseline(args[1])
+        args = args[2:]
+    if not args:
+        sys.exit("usage: comment_cleanup.py [--baseline example_ynh-dir] <repo>...")
     blocked = 0
-    for repo in sys.argv[1:]:
-        flagged = check_repo(repo)
+    for repo in args:
+        flagged = check_repo(repo, baseline)
         name = os.path.basename(repo.rstrip("/"))
         hard_n = sum(1 for f in flagged if f[1])
         if flagged:
-            print(f"{name}: {hard_n} blocking, {len(flagged) - hard_n} advisory")
+            mode = "delta" if baseline else "absolute"
+            print(f"{name}: {hard_n} blocking, {len(flagged) - hard_n} advisory ({mode})")
             for rel, why, adv, c, n in flagged:
                 tag = "BLOCK" if why else "advise"
                 bits = " | ".join(b for b in (why, adv) if b)

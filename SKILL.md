@@ -4,7 +4,7 @@ description: "Package, repair or audit a YunoHost 12 app package (_ynh): manifes
 license: AGPL-3.0
 compatibility: "Any agentskills.io-compatible agent. Needs a reachable YunoHost 12.x box (local or ssh), git, python3, and network access to github.com."
 metadata:
-  version: "3.4.1"
+  version: "3.5.0"
   author: Hermes Agent
   tags: yunohost, packaging, debian, sysadmin
 ---
@@ -67,11 +67,12 @@ prompts: references/publish-and-catalog.md.
 4. **SSO by default** for any app with its own login — research its auth backends first (LDAP/OIDC/SAML/trusted-header/local): references/auth-backend-integration.md, wiring in references/ssowat-integration.md. `auth_header` DEFAULTS to true per permission: set it explicitly false on permissions covering Bearer-token API routes, or you ship an infinite login loop.
 5. **No live-only fixes.** `ynh_setup_source` re-extracts on every pass and managed config is overwritten every time, so a box-side edit is unprovisioned until it is in the repo AND landed with `yunohost app upgrade <app> -u <clone>`. Durability doctrine: references/traps-lifecycle.md.
 6. **Secrets live in app settings**, scripts re-render config from settings. Never regenerate on upgrade/restore: `ynh_app_setting_set_default --key=k --value=$(ynh_string_random)`.
-7. **Comments: one line of WHY, or none.** Density under ~15% with no wrapped-prose wall of 6+ lines; `scripts/comment_cleanup.py <repo>` exits 1 above that. A why that needs a paragraph belongs in `doc/`, not in the script.
+7. **Comments: one line of WHY, or none — measured against the template, not absolute.** `scripts/comment_cleanup.py --baseline <example_ynh-clone> <repo>` blocks only on comments the package itself added (fleet ground truth: 64% of level-8 packages and example_ynh itself fail an absolute 15% budget — banners and template prose are house style). No wrapped-prose wall of 6+ lines anywhere. A why that needs a paragraph belongs in `doc/`, not in the script.
 8. **Nothing leaks.** No names, emails, domains, usernames, IPs or box inventories in files, images or history — 3-layer audit before every push: references/repo-hygiene.md.
 9. **Publish as `$GH_ACCOUNT`:** PAT from `$GH_TOKEN_FILE` (never in a remote URL), author `$COMMIT_AUTHOR`, repo `<upstream-name>_ynh`, tag `v<version>-ynh<N>` verified on the remote, sources as release assets. Stage **explicit paths** — a blanket `git add -A` in a package dir commits package_linter's `.manifest.v2.schema.json`, `.tests.v1.schema.json`, `.config_panel.v1.schema.json` and `.spdx_licenses`, which is why all four are gitignored (references/repo-hygiene.md). Changes to an already published repo: verify on the box, commit, then wait for explicit user approval before pushing.
 10. **Ship the catalog set:** real `doc/screenshots/*.png` embedded in README+README_fr, square RGBA logo ≥180px with transparent corners, DESCRIPTION/ADMIN (+fr), canonical AGPL-3.0 LICENSE text, modes 755 for lifecycle scripts and 644 for `_common.sh`/`change_url`/`config`. Sourcing ladder and presentation rules: references/repo-hygiene.md.
 11. **Mail goes through the box's Postfix** when the app sends email: `127.0.0.1:25`, plaintext, no auth, never an external provider; From must be a domain the relay accepts (`app@<install-domain>` by default). Prove it with a real send and a `status=sent` in mail.log: references/postfix-integration.md §Outbound.
+12. **Level 8 is sustained freshness, not day-one green.** The catalog bar is ≥level 5 for ~a year, bot-computed. So: every pinned source declares an `autoupdate.strategy` (stable tags/releases only; per-arch `asset` regex when assets differ — 90% of level-8 packages do), and `tests.toml` registers the previous `~ynh` tag's commit under `test_upgrade_from` (54% of level-8 packages, median 1 entry). Without both, the package decays out of level 8 within a year no matter how green its CI was.
 
 ## Checks CI cannot make (do these on a live box)
 | check | pass condition |
@@ -110,7 +111,7 @@ Mechanics for each: references/workflow.md §Manual checks. CI already covers in
 - references/upstream-repo-staleness-triage.md — one lagging `_ynh` repo or the whole fleet: why it lags, is the update bot dead.
 - references/publish-and-catalog.md — the production path after green CI: public repo, human verification, org transfer (and what to do without membership), the two-job org-CI acceptance rule, the catalog PR template, forum + fediverse announcement, credential prompts.
 - references/app-recipes.md — verified builds and their quirks, one block per app class.
-- `scripts/` — `verify_conformance.py` (file set + hallucinated helpers), `comment_cleanup.py` (comment budget), `comment_gate.py` (proves a cleanup touched only comments), `pii_gate.sh` (pre-push PII sweep), `verify_skill_integrity.py` (this skill's own reference/link check).
+- `scripts/` — `verify_conformance.py` (MUST: file set + hallucinated helpers + pins; STYLE: template cosmetics, advisory), `comment_cleanup.py` (comment budget; `--baseline` = delta vs example_ynh), `comment_gate.py` (proves a cleanup touched only comments), `pii_gate.sh` (pre-push PII sweep), `verify_skill_integrity.py` (this skill's own reference/link check).
 
 ## Maintaining this skill
 - Commit every edit: `scripts/verify_skill_integrity.py .` must pass (references resolve both ways, per-file line budget), `scripts/pii_gate.sh` before pushing, then bump `metadata.version`, tag `v<x.y.z>`, `gh release create <tag>`.

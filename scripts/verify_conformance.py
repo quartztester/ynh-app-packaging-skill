@@ -11,6 +11,14 @@ packaging_format=2 manifests; every ynh_* helper called in code (not in
 comments) exists in the local /usr/share/yunohost/helpers.v2.1.d (skipped
 with INFO on non-YunoHost hosts).
 
+MUST (exit 1): file set, modes, shebang, bash -n, helpers_version pin,
+hallucinated helpers, config sourcing ../settings. These predict breakage.
+STYLE (reported, exit 0): banner order/length/casing, head sources,
+Keep-comment, END OF SCRIPT trailer — template furniture. Fleet ground
+truth (454 level-8 repos, 2026-11): nextcloud, umami, sharkey all deviate
+on STYLE items while solidly level-8; only MUST items correlate with
+actual failures.
+
 NOT covered — do manually: PNG/logo validity, PII sweep, package_linter.
 
 Usage: verify_conformance.py <repo-dir> [<repo-dir> ...]
@@ -82,7 +90,7 @@ def available_helpers():
 
 
 def audit(repo, helpers=None):
-    issues, infos = [], []
+    issues, styles, infos = [], [], []
     sdir = repo / "scripts"
 
     for name in LIFECYCLE + ("_common.sh",):
@@ -157,33 +165,33 @@ def audit(repo, helpers=None):
         lines, titles, bad_len, inline = parse(script)
         tvals = [t for _, t in titles]
         for n, ln in bad_len:
-            issues.append(f"scripts/{name}:{n} banner length {ln} (want 50)")
+            styles.append(f"scripts/{name}:{n} banner length {ln} (want 50)")
         for n in inline:
-            issues.append(f"scripts/{name}:{n} one-line '# ==== X ====' banner")
+            styles.append(f"scripts/{name}:{n} one-line '# ==== X ====' banner")
         for n, t in titles:
             if not TITLE_OK.match(t):
-                issues.append(f"scripts/{name}:{n} title not ALL-CAPS ASCII: {t!r}")
+                styles.append(f"scripts/{name}:{n} title not ALL-CAPS ASCII: {t!r}")
         if lines and not lines[0].startswith("#!"):
             issues.append(f"scripts/{name} no shebang on line 1")
 
         head = "\n".join(lines[:15])
         if name in SIX:
             if not tvals or tvals[0] != "# IMPORT GENERIC HELPERS":
-                issues.append(f"scripts/{name} first banner "
+                styles.append(f"scripts/{name} first banner "
                               f"{tvals[0] if tvals else '(none)'!r},"
                               f" want IMPORT GENERIC HELPERS")
             if "# END OF SCRIPT" not in tvals:
-                issues.append(f"scripts/{name} no END OF SCRIPT trailer")
+                styles.append(f"scripts/{name} no END OF SCRIPT trailer")
         if name in ("install", "remove", "upgrade", "change_url"):
             if COMMON_SRC not in head:
-                issues.append(f"scripts/{name} no 'source _common.sh' in head")
+                styles.append(f"scripts/{name} no 'source _common.sh' in head")
         if name in ("backup", "restore"):
             if COMMON_BR_SRC not in head:
-                issues.append(f"scripts/{name} no '../settings/scripts/_common.sh' source")
+                styles.append(f"scripts/{name} no '../settings/scripts/_common.sh' source")
             for i, ln in enumerate(lines):
                 if ln.strip() == COMMON_BR_SRC:
                     if i == 0 or lines[i - 1].strip() != KEEP:
-                        issues.append(f"scripts/{name}:{i + 1} "
+                        styles.append(f"scripts/{name}:{i + 1} "
                                       f"source lacks Keep-comment above")
                     break
         if name == "config":
@@ -211,7 +219,7 @@ def audit(repo, helpers=None):
                                     code_only))
             for h in sorted(called - helpers - repo_defined):
                 issues.append(f"scripts/{name} calls unknown helper {h}()")
-    return issues, infos
+    return issues, styles, infos
 
 
 def main():
@@ -228,9 +236,11 @@ def main():
     bad = 0
     helpers = available_helpers()
     for repo in repos:
-        issues, infos = audit(repo, helpers)
+        issues, styles, infos = audit(repo, helpers)
         for msg in infos:
             print(f"INFO  {repo.name}: {msg}")
+        for msg in styles:
+            print(f"STYLE {repo.name}: {msg}")
         if issues:
             bad += 1
             print(f"FAIL  {repo.name} ({len(issues)} issues)")
@@ -238,7 +248,7 @@ def main():
                 print(f"  - {msg}")
         else:
             print(f"OK    {repo.name}")
-    print(f"\n{len(repos) - bad}/{len(repos)} repos conformant")
+    print(f"\n{len(repos) - bad}/{len(repos)} repos conformant (STYLE notes above are advisory)")
     return 1 if bad else 0
 
 
