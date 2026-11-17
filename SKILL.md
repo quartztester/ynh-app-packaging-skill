@@ -4,7 +4,7 @@ description: "Package, repair or audit a YunoHost 12 app package (_ynh): manifes
 license: AGPL-3.0
 compatibility: "Any agentskills.io-compatible agent. Needs a reachable YunoHost 12.x box (local or ssh), git, python3, and network access to github.com."
 metadata:
-  version: "3.5.0"
+  version: "3.5.1"
   author: Hermes Agent
   tags: yunohost, packaging, debian, sysadmin
 ---
@@ -67,7 +67,7 @@ prompts: references/publish-and-catalog.md.
 4. **SSO by default** for any app with its own login — research its auth backends first (LDAP/OIDC/SAML/trusted-header/local): references/auth-backend-integration.md, wiring in references/ssowat-integration.md. `auth_header` DEFAULTS to true per permission: set it explicitly false on permissions covering Bearer-token API routes, or you ship an infinite login loop.
 5. **No live-only fixes.** `ynh_setup_source` re-extracts on every pass and managed config is overwritten every time, so a box-side edit is unprovisioned until it is in the repo AND landed with `yunohost app upgrade <app> -u <clone>`. Durability doctrine: references/traps-lifecycle.md.
 6. **Secrets live in app settings**, scripts re-render config from settings. Never regenerate on upgrade/restore: `ynh_app_setting_set_default --key=k --value=$(ynh_string_random)`.
-7. **Comments: one line of WHY, or none — measured against the template, not absolute.** `scripts/comment_cleanup.py --baseline <example_ynh-clone> <repo>` blocks only on comments the package itself added (fleet ground truth: 64% of level-8 packages and example_ynh itself fail an absolute 15% budget — banners and template prose are house style). No wrapped-prose wall of 6+ lines anywhere. A why that needs a paragraph belongs in `doc/`, not in the script.
+7. **Comments: one line of WHY, or none — measured against the template, not absolute.** `scripts/comment_cleanup.py --baseline <example_ynh-clone> <repo>` blocks only on comments the package itself added (fleet ground truth: 64% of level-8 packages and example_ynh itself fail an absolute 15% budget — banners and template prose are house style). No wrapped-prose wall of 6+ added lines. A why that needs a paragraph belongs in `doc/`, not in the script.
 8. **Nothing leaks.** No names, emails, domains, usernames, IPs or box inventories in files, images or history — 3-layer audit before every push: references/repo-hygiene.md.
 9. **Publish as `$GH_ACCOUNT`:** PAT from `$GH_TOKEN_FILE` (never in a remote URL), author `$COMMIT_AUTHOR`, repo `<upstream-name>_ynh`, tag `v<version>-ynh<N>` verified on the remote, sources as release assets. Stage **explicit paths** — a blanket `git add -A` in a package dir commits package_linter's `.manifest.v2.schema.json`, `.tests.v1.schema.json`, `.config_panel.v1.schema.json` and `.spdx_licenses`, which is why all four are gitignored (references/repo-hygiene.md). Changes to an already published repo: verify on the box, commit, then wait for explicit user approval before pushing.
 10. **Ship the catalog set:** real `doc/screenshots/*.png` embedded in README+README_fr, square RGBA logo ≥180px with transparent corners, DESCRIPTION/ADMIN (+fr), canonical AGPL-3.0 LICENSE text, modes 755 for lifecycle scripts and 644 for `_common.sh`/`change_url`/`config`. Sourcing ladder and presentation rules: references/repo-hygiene.md.

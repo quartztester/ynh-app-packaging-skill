@@ -49,8 +49,11 @@ MIN_LINES = 10
 MAX_RUN = 6
 PROSE_RUN = 3
 
-# ponytail: name-based list kept minimal; generic dirs cover upstream code
-VENDORED = ["sources/*", "sources/**", "scripts/contrib/*"]
+# conf/ files vendored verbatim from upstream (their comments are upstream's,
+# not ours): add an app's file here when packaging it — nova3 lua, i2pd, etc.
+VENDORED = ["conf/nova3/*", "conf/nova3/**", "*nova2dl.py", "*novaprinter.py",
+            "conf/webui/templates/*", "conf/redis.conf",
+            "conf/i2pd.conf", "conf/tunnels.conf", "scripts/contrib/*"]
 
 SCAN_DIRS = ("conf", "scripts")
 SCAN_FILES = ("manifest.toml", "tests.toml", "config_panel.toml")
@@ -93,7 +96,9 @@ def baseline_filter(baseline_lines, text):
     """Comment lines identical to a baseline (example_ynh) comment line are
     house style, not the package's own: return text minus one occurrence of
     each baseline comment line (multiset — position-independent, so a
-    template comment that moved in a rearranged file still drops)."""
+    template comment that moved in a rearranged file still drops).
+    ponytail: matches '#' syntax only; --///* files fall through unfiltered
+    (no such files in example_ynh) — extend if a template ever ships one."""
     if not baseline_lines:
         return text
     pool = Counter(l.strip() for l in baseline_lines
