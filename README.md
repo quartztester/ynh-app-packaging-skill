@@ -44,7 +44,7 @@ packaged natively — never Docker, LXC or a VM as the app's runtime.
 | path | what it is |
 |---|---|
 | `SKILL.md` | the workflow, the rules that break a package, and a symptom → file map |
-| `references/` | 16 files loaded on demand: lifecycle and CI mechanics, trap catalogs, SSO/auth, UX doctrine, repo hygiene, official-docs index |
+| `references/` | 17 files loaded on demand: lifecycle and CI mechanics, trap catalogs, SSO/auth, UX doctrine, repo hygiene, official-docs index |
 | `scripts/` | conformance audit, comment budget, comment-only-diff prover, PII sweep, skill self-check |
 | `CONTRIBUTION.md` · [`_fr`](CONTRIBUTION_fr.md) | the human contributor guide, with the reviewer bar |
 | `PHILOSOPHY.md` · `STRATEGY.md` | why this exists and where it is going |

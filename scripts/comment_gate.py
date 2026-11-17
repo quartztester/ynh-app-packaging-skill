@@ -54,8 +54,6 @@ for f in files:
     if old is None:
         print(f"{repo.name}/{f}: new file, skip gate"); continue
     o, n = old.splitlines(), new.splitlines()
-    for l in o + n:
-        pass
     sm = difflib.SequenceMatcher(None, o, n, autojunk=False)
     for tag, i1, i2, j1, j2 in sm.get_opcodes():
         if tag == "equal": continue
@@ -71,7 +69,5 @@ for f in files:
                 print(f"{repo.name}/{f}: replaced CODE differs: {fa[:2]} vs {fb[:2]}"); bad += 1
     if heredocs(old) != heredocs(new):
         print(f"{repo.name}/{f}: HEREDOC BODY CHANGED"); bad += 1
-    for l in new.splitlines():
-        if re.match(r"^#!", l): continue
 print(f"{repo.name}: {'FAIL' if bad else 'CODE-IDENTITY-OK'} ({len(files)} files)")
 sys.exit(1 if bad else 0)

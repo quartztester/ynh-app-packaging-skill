@@ -107,7 +107,12 @@ def audit(repo, helpers=None):
         if not re.search(r"^packaging_format\s*=\s*2", mtxt, re.M):
             infos.append("manifest not packaging_format 2 (helpers_version gate skipped)")
         else:
-            sec = re.search(r"^\[integration\][^\[]*", mtxt, re.M | re.S)
+            # stop at the next section header at line start — a bare [^\[]*
+            # stops at the first '[' inside any array value, so
+            # architectures = [...] before helpers_version = false-missing
+            # (latent order-dependency; catalog manifests sampled 2026-11-17
+            # all order helpers_version first)
+            sec = re.search(r"^\[integration\].*?(?=^\[|\Z)", mtxt, re.M | re.S)
             hv = re.search(r'^helpers_version\s*=\s*"([^"]+)"',
                            sec.group(0) if sec else mtxt, re.M)
             if not hv:

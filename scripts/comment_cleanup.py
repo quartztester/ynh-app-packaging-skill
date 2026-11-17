@@ -2,12 +2,14 @@
 """comment cleanup check (rule 7b) — flag comment-heavy or narration-heavy files.
 
 Usage: comment_cleanup.py <repo> [<repo>...]
-Exit 1 if any file is flagged. Two layers, one blocking + one advisory (maintainer call: prose blocks
-are accepted style, so only real walls block):
+Exit 1 if any file is flagged. Two layers, one blocking + one advisory
+(maintainer call: prose blocks are accepted style, so only real walls
+block; standalone why-one-liners, however many in a row, never do):
 
 BLOCKING budget:
   - comment density > 15% of file lines (min 10 comment lines), or
-  - any consecutive run >= 6 lines
+  - a consecutive WRAPPED-PROSE run >= 6 lines (continuation lines
+    lowercase or lines ending mid-sentence — a wall of narration)
 
 ADVISORY gauntlet (reported, never exit 1; adapted from
 https://gist.github.com/bavanws/123e0343f8a79cec825d9141124a0a83 —
