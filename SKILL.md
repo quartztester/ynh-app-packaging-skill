@@ -4,7 +4,7 @@ description: "Package, repair or audit a YunoHost 12 app package (_ynh): manifes
 license: AGPL-3.0
 compatibility: "Any agentskills.io-compatible agent. Needs a reachable YunoHost 12.x box (local or ssh), git, python3, and network access to github.com."
 metadata:
-  version: "3.5.2"
+  version: "3.5.3"
   author: Hermes Agent
   tags: yunohost, packaging, debian, sysadmin
 ---
@@ -114,7 +114,7 @@ Mechanics for each: references/workflow.md §Manual checks. CI already covers in
 - `scripts/` — `verify_conformance.py` (MUST: file set + hallucinated helpers + pins; STYLE: template cosmetics, advisory), `comment_cleanup.py` (comment budget; `--baseline` = delta vs example_ynh), `comment_gate.py` (proves a cleanup touched only comments), `pii_gate.sh` (pre-push PII sweep), `verify_skill_integrity.py` (this skill's own reference/link check).
 
 ## Maintaining this skill
-- Commit every edit: `scripts/verify_skill_integrity.py .` must pass (references resolve both ways, per-file line budget), `scripts/pii_gate.sh` before pushing, then bump `metadata.version`, tag `v<x.y.z>`, `gh release create <tag>`.
+- Commit every edit: `scripts/test_gates.py [<example_ynh-clone>]` must pass (gate polarity: template/reference pass, known deviants fail — catches gate regressions a green run can't), `scripts/verify_skill_integrity.py .` must pass (references resolve both ways, per-file line budget), `scripts/pii_gate.sh` before pushing, then bump `metadata.version`, tag `v<x.y.z>`, `gh release create <tag>`.
 - One canonical home per trap: fold a lesson into the existing file and delete the duplicate instead of adding a parallel section. A rule earns a place only if a real live failure proved it or it covers a script every package ships.
 - Human docs live in `CONTRIBUTION.md` / `CONTRIBUTION_fr.md`. They are not part of the agent's load path — don't read them to package an app.
 
