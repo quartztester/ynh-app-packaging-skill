@@ -44,7 +44,9 @@ SIX = LIFECYCLE + ("change_url",)
 TITLE_OK = re.compile(r"^#[ ]?[A-Z0-9][A-Z0-9 ,&'()/+.:\"~_-]*$")
 INLINE_BANNER = re.compile(r"^#\s*=+ .+ =+\s*$")
 
-REQUIRED_FILES = ("README.md", "README_fr.md", "LICENSE", "tests.toml",
+# README_fr.md dropped 2026-11: upstream readme_generator now deletes README_*.md
+# as legacy (verified: 8/8 recently-pushed catalog apps ship only README.md)
+REQUIRED_FILES = ("README.md", "LICENSE", "tests.toml",
                   "manifest.toml", ".gitignore",
                   "doc/DESCRIPTION.md", "doc/DESCRIPTION_fr.md")
 INFO_FILES = ("doc/ADMIN.md", "doc/ADMIN_fr.md", "conf", ".github/ISSUE_TEMPLATE.md")
