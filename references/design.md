@@ -24,7 +24,8 @@ obvious thing; uniform slots are what makes two packages comparable.
 - **Runtime:** interpreter or build chain; how it's obtained; offline deps.
 - **Services:** extra systemd units/sidecars/timers beyond the app unit; why each exists.
 - **Storage:** DB/cache instance (private vs shared); where state lives.
-- **Auth:** ldap/sso verdict; permission split incl. non-standard perms (API public, registry outside path); ssh/mail user grants.
+- **Auth:** ldap/sso verdict; permission split incl. non-standard perms (API public, registry outside path); ssh user grants.
+- **Email:** how it sends — box's own postfix vs external relay; sender address and which credentials, stored where; TLS quirks (STARTTLS, port rewrites); inbound hooks (sieve/dovecot) if any. "No mail" is a valid answer.
 - **Path:** root-only or subdir; how it's enforced.
 - **Ports/firewall:** non-loopback ports, direct-TLS surfaces, `--needs_exposed_ports`.
 - **Scheduler:** cron/timers outside the main unit.
