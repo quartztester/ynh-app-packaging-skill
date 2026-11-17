@@ -4,7 +4,7 @@ description: "Package, repair or audit a YunoHost 12 app package (_ynh): manifes
 license: AGPL-3.0
 compatibility: "Any agentskills.io-compatible agent. Needs a reachable YunoHost 12.x box (local or ssh), git, python3, and network access to github.com."
 metadata:
-  version: "3.5.1"
+  version: "3.5.2"
   author: Hermes Agent
   tags: yunohost, packaging, debian, sysadmin
 ---
@@ -72,7 +72,7 @@ prompts: references/publish-and-catalog.md.
 9. **Publish as `$GH_ACCOUNT`:** PAT from `$GH_TOKEN_FILE` (never in a remote URL), author `$COMMIT_AUTHOR`, repo `<upstream-name>_ynh`, tag `v<version>-ynh<N>` verified on the remote, sources as release assets. Stage **explicit paths** — a blanket `git add -A` in a package dir commits package_linter's `.manifest.v2.schema.json`, `.tests.v1.schema.json`, `.config_panel.v1.schema.json` and `.spdx_licenses`, which is why all four are gitignored (references/repo-hygiene.md). Changes to an already published repo: verify on the box, commit, then wait for explicit user approval before pushing.
 10. **Ship the catalog set:** real `doc/screenshots/*.png` embedded in README+README_fr, square RGBA logo ≥180px with transparent corners, DESCRIPTION/ADMIN (+fr), canonical AGPL-3.0 LICENSE text, modes 755 for lifecycle scripts and 644 for `_common.sh`/`change_url`/`config`. Sourcing ladder and presentation rules: references/repo-hygiene.md.
 11. **Mail goes through the box's Postfix** when the app sends email: `127.0.0.1:25`, plaintext, no auth, never an external provider; From must be a domain the relay accepts (`app@<install-domain>` by default). Prove it with a real send and a `status=sent` in mail.log: references/postfix-integration.md §Outbound.
-12. **Level 8 is sustained freshness, not day-one green.** The catalog bar is ≥level 5 for ~a year, bot-computed. So: every pinned source declares an `autoupdate.strategy` (stable tags/releases only; per-arch `asset` regex when assets differ — 90% of level-8 packages do), and `tests.toml` registers the previous `~ynh` tag's commit under `test_upgrade_from` (54% of level-8 packages, median 1 entry). Without both, the package decays out of level 8 within a year no matter how green its CI was.
+12. **Level 8 is sustained freshness, not day-one green.** The catalog bar is ≥level 5 for ~a year, bot-computed. So: every pinned source declares an `autoupdate.strategy` — `latest_github_release`/`_tag` constrained to stable tags, `latest_github_commit` only for tagless rolling upstreams, per-arch `asset` regex when release assets differ (90% of source-bearing level-8 packages declare one) — and `tests.toml` registers the previous `~ynh` tag's commit under `test_upgrade_from` (54% of level-8 packages, median 1 entry). Without both, the package decays out of level 8 within a year no matter how green its CI was.
 
 ## Checks CI cannot make (do these on a live box)
 | check | pass condition |
