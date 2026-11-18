@@ -30,6 +30,20 @@ correct by other means and the proof is written down.
 - Reporting a matrix green when any variant was excluded — enumerate included,
   excluded, and why.
 
+## Harness blind spots (green here proves nothing — say so in the report)
+- Backup/restore compares NO content: a restore that brings back nothing but
+  an nginx conf passes on curl 200. Restore must verifiably move the real
+  DB dump and data dirs; user's box test = write data, backup, restore,
+  confirm the data.
+- Curl tests see status codes, not rendered truth: an SPA shell served with a
+  dead API still returns 200. Login and one real write path = user's box test.
+- Upgrade tests never diff user data: `--full_replace` wiping user state still
+  passes. `--keep` list = user's mutable state; justify each entry.
+- wait_until patterns must come from UPSTREAM source (cite file), never a line
+  the package's own unit echoes.
+- Source integrity: pin upstream tarball + sha256, no gutted forks, no
+  build artifacts fetched at install time from anywhere but official sources.
+
 ## Audit trail (what the user can check without trusting the agent)
 - One commit per failure fix, message quoting the exact error line it answers.
 - Keep every package_check log; per-test verdict from results_N.json, never
