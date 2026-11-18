@@ -66,6 +66,14 @@ correct by other means and the proof is written down.
   from the launcher exit code or the global level line.
 - Verdict applies only to the tree at launch; any scripts/manifest/conf edit
   after the last green run means rerun before claiming green.
+- Validate tests.toml with the harness's own parser (parse_tests_toml +
+  filter_test_list) before launching a run: TOML nesting silently moves keys
+  between tables (an `exclude` after a `[default.curl_tests]` header lands
+  inside curl_tests and fails the schema), and eyeballing toml.dumps output
+  is not verification.
+- Curl assertions must match the upstream route's method: GET on a POST-only
+  endpoint (Symfony json_login check_path) answers 405, not 401 — pick an
+  upstream public GET route and cite the source file in a comment.
 
 ## Day-one green is not the ceiling
 CI covers URL-alive + lifecycle. Portal login, a real write path, and the
