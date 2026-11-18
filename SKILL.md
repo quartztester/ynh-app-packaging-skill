@@ -4,7 +4,7 @@ description: "Package, repair or audit a YunoHost 12 app package (_ynh): manifes
 license: AGPL-3.0
 compatibility: "Any agentskills.io-compatible agent. Needs a reachable YunoHost 12.x box (local or ssh), git, python3, and network access to github.com."
 metadata:
-  version: "3.7.0"
+  version: "3.8.0"
   author: Hermes Agent
   tags: yunohost, packaging, debian, sysadmin
 ---
@@ -48,7 +48,7 @@ Run [package_check](https://github.com/YunoHost/package_check), the same harness
 Push a branch, open the PR, comment `!testme` as its own comment, then read the bot's per-test summary once the badges settle. Dev CI only fires on YunoHost-Apps org repos; pre-transfer, local package_check is the same matrix. Mechanics: references/workflow.md §Official CI.
 
 ### 5. Fix, repeat, then report
-One failing test at a time: read the per-test log, fix the cause in the repo (never on the box), re-run step 3, re-push the branch, re-trigger `!testme`. Stop when the whole matrix is green. A run killed by timeout or still in progress has no verdict — never call it green. Report: what passed, what CI could not cover, what is gated on user approval.
+One failing test at a time: read the per-test log, fix the cause in the repo (never on the box), re-run step 3, re-push the branch, re-trigger `!testme`. Stop when the whole matrix is green. A run killed by timeout or still in progress has no verdict — never call it green. Every fix must make the app actually work, not merely satisfy the harness's proxies (stderr counts, curl codes, log patterns) — allowed vs forbidden fix classes and the audit trail the user can verify: references/anti-cheat.md. Report: what passed, what CI could not cover, what is gated on user approval.
 
 ### 6. Ship it to the catalog
 Green CI is the halfway point. Public repo → human verify → transfer to `YunoHost-Apps` →
