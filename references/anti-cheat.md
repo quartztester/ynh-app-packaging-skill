@@ -43,6 +43,22 @@ correct by other means and the proof is written down.
   the package's own unit echoes.
 - Source integrity: pin upstream tarball + sha256, no gutted forks, no
   build artifacts fetched at install time from anywhere but official sources.
+- Same-version upgrade only proves a re-run: when prior ynh versions exist,
+  tests.toml must declare a real older `test_upgrade_from` commit; first
+  release = say "same-version only" in the report.
+- Curl assertions are opt-in (`expect_title`/`expect_content` default None,
+  `auto_test_assets` default False): a tests.toml with bare paths asserts
+  almost nothing. Minimum: expect_title on home, expect_content on one real
+  app route, auto_test_assets = true.
+- Config panel test only checks `app config get` exits 0 — panel mutations
+  are box-test material, never CI-proven.
+- CI always installs public (`is_public=1`, visitors forced): private-mode
+  behavior is untested; state it in the report if relevant.
+- Upgrade runs with `--no-safety-backup`: the pre-upgrade backup path is
+  never exercised by CI.
+- No harness/environment sniffing anywhere in scripts (test domains, LXC
+  markers, CI user names): serving the harness different content than a real
+  user is the deepest cheat there is.
 
 ## Audit trail (what the user can check without trusting the agent)
 - One commit per failure fix, message quoting the exact error line it answers.
